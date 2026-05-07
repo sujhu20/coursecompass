@@ -58,7 +58,7 @@
 ```bash
 git clone <repo-url>
 cd career-course-compass
-cp .env.example .env        # Edit with your keys
+# Create a .env file and add your keys
 npm install
 npm start                   # http://localhost:3000
 ```
