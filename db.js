@@ -4,6 +4,11 @@
 
 const isPostgres = !!process.env.DATABASE_URL;
 
+// Debug: log what DATABASE_URL looks like (hide password)
+const dbUrl = process.env.DATABASE_URL || 'NOT SET';
+const safeUrl = dbUrl.replace(/:([^@]+)@/, ':***@');
+console.log('DATABASE_URL:', safeUrl);
+
 if (isPostgres) {
   // ════════════════ POSTGRESQL MODE ════════════════
   const { Pool } = require('pg');
