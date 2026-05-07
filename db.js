@@ -1,153 +1,81 @@
-// db.js — Dual Database Wrapper
-// Uses PostgreSQL when DATABASE_URL exists (Vercel/Production)
-// Uses SQLite when DATABASE_URL is missing (Local Development)
+// db.js — Dual Database Wrapper (MySQL + SQLite)
+// Uses MySQL when MYSQL_URL exists (Vercel/Production)
+// Uses SQLite when MYSQL_URL is missing (Local Development)
 
-let dbUrl = process.env.SUPABASE_URL || process.env.DATABASE_URL || '';
+const isMySQL = !!process.env.MYSQL_URL;
 
-// Debug exactly what we are seeing
-console.log('--- DB DEBUG START ---');
-console.log('Raw URL Length:', dbUrl.length);
-if (dbUrl) {
-  try {
-    const urlObj = new URL(dbUrl);
-    console.log('Protocol:', urlObj.protocol);
-    console.log('Hostname:', urlObj.hostname);
-    console.log('Port:', urlObj.port);
-    console.log('Pathname:', urlObj.pathname);
-  } catch (e) {
-    console.log('URL is not valid for URL parser');
-  }
-}
-console.log('--- DB DEBUG END ---');
+if (isMySQL) {
+  // ════════════════ MYSQL MODE ════════════════
+  const mysql = require('mysql2/promise');
+  
+  // Create a connection pool
+  const pool = mysql.createPool(process.env.MYSQL_URL);
 
-// Clean it
-dbUrl = dbUrl.trim().replace(/^\*+|\*+$/g, '');
-const isPostgres = dbUrl.length > 10 && dbUrl.startsWith('postgres');
+  console.log('✅ MySQL Pool Created (Production)');
 
-if (isPostgres) {
-  const { Pool } = require('pg');
-  const pool = new Pool({
-    connectionString: dbUrl,
-    ssl: { rejectUnauthorized: false }
-  });
-
-  // Test connection
-  pool.query('SELECT NOW()')
-    .then(() => console.log('✅ PostgreSQL connected (Production)'))
-    .catch(err => console.error('❌ PostgreSQL connection failed:', err.message));
-
-  // Convert SQLite ? placeholders to PostgreSQL $1, $2, ...
-  function convertPlaceholders(sql) {
-    let i = 0;
-    return sql.replace(/\?/g, () => `$${++i}`);
-  }
-
-  // Convert SQLite-specific syntax to PostgreSQL
-  function convertSQL(sql) {
-    let converted = convertPlaceholders(sql);
-
-    // INSERT OR IGNORE → INSERT ... ON CONFLICT DO NOTHING
-    if (/INSERT OR IGNORE/i.test(converted)) {
-      converted = converted.replace(/INSERT OR IGNORE/gi, 'INSERT');
-      if (!/ON CONFLICT/i.test(converted)) {
-        converted += ' ON CONFLICT DO NOTHING';
-      }
-    }
-
-    // SQLite types → PostgreSQL types
-    converted = converted.replace(/DATETIME/gi, 'TIMESTAMP');
-    converted = converted.replace(/INTEGER PRIMARY KEY AUTOINCREMENT/gi, 'SERIAL PRIMARY KEY');
-
-    return converted;
-  }
-
+  // Convert SQLite ? placeholders to MySQL (MySQL also uses ?)
+  // So no placeholder conversion needed!
+  
   const db = {
-    run(sql, params, callback) {
+    async run(sql, params, callback) {
       if (typeof params === 'function') { callback = params; params = []; }
-      const pgSQL = convertSQL(sql);
+      
+      // Convert SQLite syntax to MySQL
+      let mySQL = sql.replace(/INSERT OR IGNORE/gi, 'INSERT IGNORE');
+      mySQL = mySQL.replace(/AUTOINCREMENT/gi, 'AUTO_INCREMENT');
+      mySQL = mySQL.replace(/DATETIME/gi, 'DATETIME');
 
-      // Add RETURNING id for INSERTs (to support this.lastID)
-      let finalSQL = pgSQL;
-      if (/^\s*INSERT/i.test(pgSQL) && !/RETURNING/i.test(pgSQL) && !/ON CONFLICT DO NOTHING/i.test(pgSQL)) {
-        finalSQL = pgSQL + ' RETURNING id';
+      try {
+        const [result] = await pool.execute(mySQL, params || []);
+        if (callback) {
+          const context = {
+            lastID: result.insertId || 0,
+            changes: result.affectedRows || 0
+          };
+          callback.call(context, null);
+        }
+      } catch (err) {
+        if (callback) callback(err);
+        else console.error('MySQL run error:', err.message);
       }
-
-      pool.query(finalSQL, params || [])
-        .then(result => {
-          if (callback) {
-            const context = {
-              lastID: result.rows?.[0]?.id || 0,
-              changes: result.rowCount || 0
-            };
-            callback.call(context, null);
-          }
-        })
-        .catch(err => {
-          // Silently ignore duplicate key errors (like INSERT OR IGNORE)
-          if (err.code === '23505') {
-            if (callback) callback.call({ lastID: 0, changes: 0 }, null);
-            return;
-          }
-          // Silently ignore "column already exists"
-          if (err.code === '42701') {
-            if (callback) callback.call({ lastID: 0, changes: 0 }, null);
-            return;
-          }
-          // Silently ignore "relation already exists"
-          if (err.code === '42P07') {
-            if (callback) callback.call({ lastID: 0, changes: 0 }, null);
-            return;
-          }
-          if (callback) callback(err);
-          else console.error('DB run error:', err.message);
-        });
     },
 
-    get(sql, params, callback) {
+    async get(sql, params, callback) {
       if (typeof params === 'function') { callback = params; params = []; }
-      const pgSQL = convertSQL(sql);
-      pool.query(pgSQL, params || [])
-        .then(result => {
-          if (callback) callback(null, result.rows[0] || null);
-        })
-        .catch(err => {
-          if (callback) callback(err, null);
-          else console.error('DB get error:', err.message);
-        });
+      try {
+        const [rows] = await pool.execute(sql, params || []);
+        if (callback) callback(null, rows[0] || null);
+      } catch (err) {
+        if (callback) callback(err, null);
+        else console.error('MySQL get error:', err.message);
+      }
     },
 
-    all(sql, params, callback) {
+    async all(sql, params, callback) {
       if (typeof params === 'function') { callback = params; params = []; }
-      const pgSQL = convertSQL(sql);
-      pool.query(pgSQL, params || [])
-        .then(result => {
-          if (callback) callback(null, result.rows || []);
-        })
-        .catch(err => {
-          if (callback) callback(err, []);
-          else console.error('DB all error:', err.message);
-        });
+      try {
+        const [rows] = await pool.execute(sql, params || []);
+        if (callback) callback(null, rows || []);
+      } catch (err) {
+        if (callback) callback(err, []);
+        else console.error('MySQL all error:', err.message);
+      }
     },
 
     serialize(fn) { if (fn) fn(); },
     close() { pool.end(); }
   };
 
-  db.isPostgres = true;
+  db.isPostgres = false; // Flag for server.js
+  db.isMySQL = true;
   module.exports = db;
 
 } else {
   // ════════════════ SQLITE MODE ════════════════
   const sqlite3 = require('sqlite3').verbose();
-  
   const db = new sqlite3.Database('./database.db', (err) => {
-    if (err) {
-      console.error('❌ SQLite connection failed:', err.message);
-    } else {
-      console.log('✅ SQLite connected (Local Development)');
-    }
+    if (!err) console.log('✅ SQLite connected (Local Development)');
   });
-
-  db.isPostgres = false;
+  db.isMySQL = false;
   module.exports = db;
 }
