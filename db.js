@@ -8,12 +8,14 @@ let dbUrl = process.env.SUPABASE_URL || process.env.DATABASE_URL || '';
 console.log('--- DB DEBUG START ---');
 console.log('Raw URL Length:', dbUrl.length);
 if (dbUrl) {
-  const parts = dbUrl.split('@');
-  if (parts.length > 1) {
-    console.log('Protocol/User Section:', parts[0].replace(/:[^:]+$/, ':***'));
-    console.log('Host/Port Section:', parts[1]);
-  } else {
-    console.log('URL format seems wrong (no @ symbol)');
+  try {
+    const urlObj = new URL(dbUrl);
+    console.log('Protocol:', urlObj.protocol);
+    console.log('Hostname:', urlObj.hostname);
+    console.log('Port:', urlObj.port);
+    console.log('Pathname:', urlObj.pathname);
+  } catch (e) {
+    console.log('URL is not valid for URL parser');
   }
 }
 console.log('--- DB DEBUG END ---');
