@@ -435,7 +435,7 @@ const sampleCourses = [
 ];
 
 // Only seed data on local SQLite — never wipe production MySQL!
-if (!db.isMySQL) {
+if (!process.env.MYSQL_URL) {
   db.serialize(() => {
     db.run('DELETE FROM salary_info');
     db.run('DELETE FROM career_map');
@@ -451,7 +451,7 @@ if (!db.isMySQL) {
 
 
 // Insert sample career mappings after courses are inserted (local only)
-if (!db.isMySQL) {
+if (!process.env.MYSQL_URL) {
 setTimeout(() => {
   const careerData = [
     // ── PCM: B.Tech ───────────────────────────────────────────────────────
