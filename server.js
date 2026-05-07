@@ -884,15 +884,18 @@ app.post("/api/recommend-courses", (req, res) => {
   }
 
   query += `
-    GROUP BY c.id, c.name, c.stream, c.min_percentage, c.description, c.youtube_id, c.duration_months
     ORDER BY c.min_percentage DESC, c.id ASC
     LIMIT 60
   `;
 
   db.all(query, [stream, percentage], (err, courses) => {
-    if (err) return res.status(500).json({ message: "Database error", success: false });
-    if (courses.length === 0) {
-      return res.status(200).json({ message: "No courses found matching your criteria. Try other streams.", success: true, courses: [] });
+    if (err) {
+      console.error('CRITICAL: Recommendation DB Error:', err.message);
+      return res.status(500).json({ message: "Database error: " + err.message, success: false });
+    }
+    if (!courses || courses.length === 0) {
+      console.log('No courses found for:', stream, percentage);
+      return res.status(200).json({ message: "No courses found matching your criteria.", success: true, courses: [] });
     }
 
     // ── Apply interest filter ─────────────────────────────────────────────
