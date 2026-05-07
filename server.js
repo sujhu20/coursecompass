@@ -127,6 +127,11 @@ app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'login.html'));
 });
 
+// Health check endpoint for monitoring (Render/Railway)
+app.get('/api/health', (req, res) => {
+  res.status(200).json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
 // Database connection
 const db = new sqlite3.Database("./database.db", (err) => {
   if (err) {
