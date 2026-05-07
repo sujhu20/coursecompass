@@ -416,24 +416,42 @@ const sampleCourses = [
   { name: "B.Des Interior Design", stream: "All", min_percentage: 50, description: "4-year degree in interior aesthetics, space planning, materials, lighting, and sustainable design.", youtube_id: null, duration_months: 48 },
 
   // ── ALL STREAMS: Hotel Management (min 50%) ───────────────────────────
-  { name: "B.Sc Hotel Management", stream: "All", min_percentage: 50, description: "3-4 year degree for careers in hotel operations, food & beverage management, tourism, and event coordination.", youtube_id: null, duration_months: 42 }
+  { name: "B.Sc Hotel Management", stream: "All", min_percentage: 50, description: "3-4 year degree for careers in hotel operations, food & beverage management, tourism, and event coordination.", youtube_id: null, duration_months: 42 },
+
+  // ── DIPLOMA COURSES (min 40%) ────────────────────────────────────────
+  { name: "Diploma in Computer Engineering", stream: "PCM", min_percentage: 40, description: "3-year technical diploma in computer hardware, networking, and programming.", youtube_id: null, duration_months: 36 },
+  { name: "Diploma in Mechanical Engineering", stream: "PCM", min_percentage: 40, description: "3-year technical diploma in industrial machinery and manufacturing.", youtube_id: null, duration_months: 36 },
+  { name: "Diploma in Electrical Engineering", stream: "PCM", min_percentage: 40, description: "3-year technical diploma in power systems and electrical maintenance.", youtube_id: null, duration_months: 36 },
+  { name: "Diploma in Civil Engineering", stream: "PCM", min_percentage: 40, description: "3-year technical diploma in construction and infrastructure.", youtube_id: null, duration_months: 36 },
+  { name: "Diploma in Medical Lab Technology (DMLT)", stream: "PCB", min_percentage: 40, description: "2-year diploma in laboratory diagnostics and clinical testing.", youtube_id: null, duration_months: 24 },
+  { name: "Diploma in Pharmacy (D.Pharm)", stream: "PCB", min_percentage: 40, description: "2-year diploma in pharmaceutical sciences and medicine retail.", youtube_id: null, duration_months: 24 },
+  { name: "Diploma in Nursing Assistant", stream: "PCB", min_percentage: 40, description: "1-year diploma in basic patient care and hospital assistance.", youtube_id: null, duration_months: 12 },
+  { name: "Diploma in Business Management", stream: "Commerce", min_percentage: 40, description: "1-year diploma in basic business operations and management.", youtube_id: null, duration_months: 12 },
+  { name: "Diploma in Digital Marketing", stream: "Commerce", min_percentage: 40, description: "1-year diploma in SEO, social media, and online advertising.", youtube_id: null, duration_months: 12 },
+  { name: "Diploma in Accounting & Taxation", stream: "Commerce", min_percentage: 40, description: "1-year diploma in GST, income tax, and bookkeeping.", youtube_id: null, duration_months: 12 },
+  { name: "Diploma in Graphic Design", stream: "Humanities", min_percentage: 40, description: "1-year diploma in visual communication and design tools.", youtube_id: null, duration_months: 12 },
+  { name: "Diploma in Fashion Design", stream: "Humanities", min_percentage: 40, description: "1-year diploma in garment construction and fashion trends.", youtube_id: null, duration_months: 12 },
+  { name: "Diploma in Journalism", stream: "Humanities", min_percentage: 40, description: "1-year diploma in news reporting, editing, and media ethics.", youtube_id: null, duration_months: 12 }
 ];
 
-db.serialize(() => {
-  // Clear all seeded data and re-seed fresh on every startup
-  db.run('DELETE FROM salary_info');
-  db.run('DELETE FROM career_map');
-  db.run('DELETE FROM courses');
-  sampleCourses.forEach(course => {
-    db.run(
-      `INSERT INTO courses (name, stream, min_percentage, description, youtube_id, duration_months) VALUES (?, ?, ?, ?, ?, ?)`,
-      [course.name, course.stream, course.min_percentage, course.description, course.youtube_id, course.duration_months]
-    );
+// Only seed data on local SQLite — never wipe production MySQL!
+if (!db.isMySQL) {
+  db.serialize(() => {
+    db.run('DELETE FROM salary_info');
+    db.run('DELETE FROM career_map');
+    db.run('DELETE FROM courses');
+    sampleCourses.forEach(course => {
+      db.run(
+        `INSERT INTO courses (name, stream, min_percentage, description, youtube_id, duration_months) VALUES (?, ?, ?, ?, ?, ?)`,
+        [course.name, course.stream, course.min_percentage, course.description, course.youtube_id, course.duration_months]
+      );
+    });
   });
-});
+}
 
 
-// Insert sample career mappings after courses are inserted
+// Insert sample career mappings after courses are inserted (local only)
+if (!db.isMySQL) {
 setTimeout(() => {
   const careerData = [
     // ── PCM: B.Tech ───────────────────────────────────────────────────────
@@ -643,6 +661,14 @@ setTimeout(() => {
       { name: "Interior Designer", role: "Residential / Commercial Space Designer", salary: [25000, 58000, 120000] },
       { name: "Space Planner", role: "Furniture & Layout Specialist", salary: [22000, 50000, 102000] }
     ]},
+    { courseName: "Diploma in Engineering", careers: [
+      { name: "Junior Engineer", role: "Technical Supervisor", salary: [15000, 30000, 65000] },
+      { name: "Maintenance Technician", role: "Site Technician", salary: [12000, 25000, 55000] }
+    ]},
+    { courseName: "Diploma in Computer Science", careers: [
+      { name: "IT Support Technician", role: "Helpdesk Support", salary: [15000, 28000, 60000] },
+      { name: "Junior Web Developer", role: "Frontend Assistant", salary: [18000, 35000, 75000] }
+    ]},
 
     // ── ALL STREAMS: Hotel Management ─────────────────────────────────────
     { courseName: "B.Sc Hotel Management", careers: [
@@ -674,6 +700,7 @@ setTimeout(() => {
     });
   });
 }, 1000);
+}
 
 // ==================== RECOMMENDATION ENDPOINT ====================
 
@@ -690,22 +717,22 @@ app.post("/api/recommend-courses", (req, res) => {
 
   // ── Interest filter maps ─────────────────────────────────────────────────
   const interestCourseMap = {
-    medical:     ['mbbs', 'bds (bachelor'],
-    nursing:     ['b.sc nursing'],
-    pharmacy:    ['b.pharm'],
+    medical:     ['mbbs', 'bds (bachelor', 'dmlt', 'medical lab'],
+    nursing:     ['b.sc nursing', 'nursing assistant'],
+    pharmacy:    ['b.pharm', 'd.pharm', 'pharmacy'],
     biotech:     ['b.sc biotechnology', 'b.sc microbiology', 'b.sc genetics'],
-    engineering: ['b.tech computer science', 'b.tech artificial intelligence', 'b.tech electronics', 'b.tech mechanical', 'b.tech civil', 'b.tech electrical', 'b.tech chemical', 'b.arch'],
-    data:        ['b.tech artificial intelligence', 'b.sc data science', 'bca data analytics'],
-    computing:   ['bca information technology', 'bca cybersecurity', 'bca data analytics', 'b.sc computer science', 'b.sc data science', 'b.tech cybersecurity', 'b.tech computer science'],
-    accounting:  ['chartered accountancy', 'b.com (hons)', 'b.com economics'],
-    business:    ['bba business administration', 'bba digital marketing', 'bba business analytics'],
-    economics:   ['b.com economics', 'b.com (hons)'],
-    marketing:   ['bba digital marketing', 'bba business analytics'],
-    psychology:  ['ba psychology'],
-    journalism:  ['bjmc', 'ba english'],
+    engineering: ['b.tech', 'b.arch', 'diploma in computer engineering', 'diploma in mechanical', 'diploma in electrical', 'diploma in civil'],
+    data:        ['b.tech artificial intelligence', 'b.sc data science', 'bca data analytics', 'computer engineering'],
+    computing:   ['bca', 'b.sc computer science', 'b.tech computer science', 'computer engineering'],
+    accounting:  ['chartered accountancy', 'b.com', 'accounting & taxation'],
+    business:    ['bba', 'business management'],
+    economics:   ['economics'],
+    marketing:   ['digital marketing'],
+    psychology:  ['psychology'],
+    journalism:  ['journalism', 'bjmc'],
     law:         ['ba llb', 'bba llb'],
-    design:      ['b.des ui/ux', 'b.des fashion', 'b.des interior'],
-    hotel:       ['b.sc hotel management']
+    design:      ['b.des', 'graphic design', 'fashion design'],
+    hotel:       ['hotel management']
   };
 
   const interest = (interest_areas || '').toLowerCase().trim();
@@ -1071,8 +1098,8 @@ app.put("/api/profile/:userId", apiLimiter, requireAuth, requireOwnership, (req,
 
 // -- BOOKMARKS --
 app.get("/api/bookmarks/:userId", apiLimiter, requireAuth, requireOwnership, (req, res) => {
-  db.all(`SELECT b.id, b.saved_at, c.id as course_id, c.name, c.stream, c.description, c.duration_months
-    FROM bookmarks b JOIN courses c ON b.course_id = c.id WHERE b.user_id = ? ORDER BY b.saved_at DESC`, [req.params.userId], (err, rows) => {
+  db.all(`SELECT b.id, b.created_at, c.id as course_id, c.name, c.stream, c.description, c.duration_months
+    FROM bookmarks b JOIN courses c ON b.course_id = c.id WHERE b.user_id = ? ORDER BY b.created_at DESC`, [req.params.userId], (err, rows) => {
     if (err) return res.status(500).json({ message: "Database error", success: false });
     res.json({ success: true, bookmarks: rows || [] });
   });
