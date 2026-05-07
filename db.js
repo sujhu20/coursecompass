@@ -15,10 +15,16 @@ function convertPlaceholders(sql) {
 // Convert SQLite-specific SQL to PostgreSQL
 function convertSQL(sql) {
   let converted = convertPlaceholders(sql);
-  // AUTOINCREMENT → SERIAL (handled in CREATE TABLE)
+  
   // INSERT OR IGNORE → INSERT ... ON CONFLICT DO NOTHING
-  converted = converted.replace(/INSERT OR IGNORE/gi, 'INSERT');
-  // ON CONFLICT ... DO UPDATE needs PostgreSQL syntax — keep as-is if already has ON CONFLICT
+  if (/INSERT OR IGNORE/i.test(converted)) {
+    converted = converted.replace(/INSERT OR IGNORE/gi, 'INSERT');
+    // We add ON CONFLICT DO NOTHING if it doesn't have one
+    if (!/ON CONFLICT/i.test(converted)) {
+      converted += ' ON CONFLICT DO NOTHING';
+    }
+  }
+
   // DATETIME → TIMESTAMP
   converted = converted.replace(/DATETIME/gi, 'TIMESTAMP');
   // INTEGER PRIMARY KEY AUTOINCREMENT → SERIAL PRIMARY KEY
@@ -33,9 +39,9 @@ const db = {
     const pgSQL = convertSQL(sql);
     const pgParams = params || [];
 
-    // For INSERT statements, add RETURNING id to get lastID
+    // For INSERT statements, add RETURNING id to get lastID if not present
     let finalSQL = pgSQL;
-    if (/^\s*INSERT/i.test(pgSQL) && !/RETURNING/i.test(pgSQL)) {
+    if (/^\s*INSERT/i.test(pgSQL) && !/RETURNING/i.test(pgSQL) && !/ON CONFLICT DO NOTHING/i.test(pgSQL)) {
       finalSQL = pgSQL + ' RETURNING id';
     }
 
