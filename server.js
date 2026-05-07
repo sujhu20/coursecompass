@@ -653,31 +653,85 @@ setTimeout(() => {
     ]}
   ];
 
-// Seed data
-setTimeout(() => {
-  careerData.forEach(item => {
-    db.get(`SELECT id FROM courses WHERE name = ?`, [item.courseName], (err, course) => {
-      if (course) {
-        item.careers.forEach(career => {
-          db.run(
-            `INSERT OR IGNORE INTO career_map (course_id, career_name, job_role, description) VALUES (?, ?, ?, ?)`,
-            [course.id, career.name, career.role, `${career.name} position`],
-            function(err) {
-              if (!err) {
-                db.run(
-                  `INSERT OR IGNORE INTO salary_info (career_id, entry_level_salary, mid_level_salary, senior_level_salary) VALUES (?, ?, ?, ?)`,
-                  [this.lastID, career.salary[0], career.salary[1], career.salary[2]]
-                );
-              }
-            }
-          );
+  const interest = (interest_areas || '').toLowerCase().trim();
+
+  // ── Query: fetch all eligible courses for the stream ─────────────────────
+  let query = `
+    SELECT c.id, c.name, c.stream, c.min_percentage, c.description, c.youtube_id, c.duration_months
+    FROM courses c
+    WHERE (c.stream = ? OR c.stream = 'All') AND c.min_percentage <= ?
+  `;
+
+  // If percentage is low (below 50), prioritize Diploma courses
+  if (parseFloat(percentage) < 50) {
+    query += ` AND c.name LIKE '%Diploma%'`;
+  }
+
+  query += `
+    ORDER BY c.min_percentage DESC, c.id ASC
+    LIMIT 60
+  `;
+
+  db.all(query, [stream, percentage], (err, courses) => {
+    if (err) return res.status(500).json({ message: "Database error", success: false });
+    if (!courses || courses.length === 0) {
+      return res.status(200).json({ message: "No courses found matching your criteria. Try other streams.", success: true, courses: [] });
+    }
+
+    // ── Apply interest filter ─────────────────────────────────────────────
+    let filtered = courses;
+    if (interest && interestCourseMap[interest]) {
+      const patterns = interestCourseMap[interest];
+      const matched = courses.filter(c => {
+        const lower = c.name.toLowerCase();
+        return patterns.some(p => lower.includes(p));
+      });
+      // Only apply filter if it yields results; otherwise fall back to all
+      if (matched.length > 0) filtered = matched;
+    }
+
+    const toProcess = filtered.slice(0, 12);
+
+    const pendingCourses = toProcess.map(course => new Promise((resolve) => {
+      const careerQuery = `
+        SELECT cm.id, cm.career_name, cm.job_role, si.entry_level_salary, si.mid_level_salary, si.senior_level_salary
+        FROM career_map cm
+        LEFT JOIN salary_info si ON cm.id = si.career_id
+        WHERE cm.course_id = ?
+        LIMIT 8
+      `;
+      db.all(careerQuery, [course.id], (err, careers) => {
+        resolve({
+          id: course.id,
+          name: course.name,
+          stream: course.stream,
+          min_percentage: course.min_percentage,
+          description: course.description,
+          youtube_id: course.youtube_id,
+          duration_months: course.duration_months,
+          eligibility: `${percentage}% meets minimum requirement of ${course.min_percentage}%`,
+          priority: percentage >= course.min_percentage + 15 ? "High" : percentage >= course.min_percentage + 5 ? "Medium" : "Low",
+          careers: careers || []
         });
-      }
+      });
+    }));
+
+    Promise.all(pendingCourses).then(results => {
+      const seen = new Set();
+      const unique = results.filter(c => { if (seen.has(c.name)) return false; seen.add(c.name); return true; });
+      const order = { "High": 1, "Medium": 2, "Low": 3 };
+      unique.sort((a, b) => (order[a.priority] || 3) - (order[b.priority] || 3));
+      res.json({
+        message: "Courses found based on your eligibility",
+        success: true,
+        student_profile: { stream, percentage, interest_areas: interest_areas || "" },
+        total_courses: unique.length,
+        courses: unique
+      });
     });
   });
-}, 1000);
+});
 
-// ==================== AUTHENTICATION ENDPOINTS ====================
 
 // Sign Up
 app.post("/api/signup", authLimiter, (req, res) => {
