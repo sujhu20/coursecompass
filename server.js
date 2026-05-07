@@ -884,7 +884,7 @@ app.post("/api/recommend-courses", (req, res) => {
   }
 
   query += `
-    GROUP BY c.id, c.name, c.stream
+    GROUP BY c.id, c.name, c.stream, c.min_percentage, c.description, c.youtube_id, c.duration_months
     ORDER BY c.min_percentage DESC, c.id ASC
     LIMIT 60
   `;
