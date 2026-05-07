@@ -46,8 +46,8 @@ if (isMySQL) {
         const [rows] = await pool.execute(sql, params || []);
         if (callback) callback(null, rows[0] || null);
       } catch (err) {
+        console.error('MySQL get error:', err.message, '| SQL:', sql);
         if (callback) callback(err, null);
-        else console.error('MySQL get error:', err.message);
       }
     },
 
@@ -57,8 +57,8 @@ if (isMySQL) {
         const [rows] = await pool.execute(sql, params || []);
         if (callback) callback(null, rows || []);
       } catch (err) {
+        console.error('MySQL all error:', err.message, '| SQL:', sql);
         if (callback) callback(err, []);
-        else console.error('MySQL all error:', err.message);
       }
     },
 
