@@ -21,10 +21,10 @@ if (isMySQL) {
       if (typeof params === 'function') { callback = params; params = []; }
       
       // Convert SQLite syntax to MySQL
-      let mySQL = sql.replace(/INSERT OR IGNORE/gi, 'INSERT IGNORE');
+      let mySQL = sql.replace(/INSERT OR IGNORE INTO/gi, 'INSERT IGNORE INTO');
+      mySQL = mySQL.replace(/INSERT OR IGNORE/gi, 'INSERT IGNORE');
       mySQL = mySQL.replace(/AUTOINCREMENT/gi, 'AUTO_INCREMENT');
-      mySQL = mySQL.replace(/DATETIME/gi, 'DATETIME');
-
+      
       try {
         const [result] = await pool.execute(mySQL, params || []);
         if (callback) {
