@@ -653,34 +653,6 @@ setTimeout(() => {
     ]}
   ];
 
-  // ── Build Query ──
-  let query = `SELECT * FROM courses WHERE stream = ? AND min_percentage <= ?`;
-  let params = [stream, percentage];
-
-  // If percentage is low (below 50), prioritize Diploma courses
-  if (parseFloat(percentage) < 50) {
-    query = `SELECT * FROM courses WHERE stream = ? AND min_percentage <= ? AND name LIKE '%Diploma%'`;
-  }
-  
-  db.all(query, params, (err, rows) => {
-    if (err) return res.status(500).json({ message: "DB Error" });
-
-    // Filter courses based on interest areas if provided
-    let results = rows;
-    if (interest_areas && interest_areas.length > 0) {
-      results = results.filter(course => {
-        return interest_areas.some(area => 
-          interestCourseMap[area]?.some(keyword => 
-            course.name.toLowerCase().includes(keyword)
-          )
-        );
-      });
-    }
-
-    res.json({ success: true, data: results });
-  });
-});
-
 // Seed data
 setTimeout(() => {
   careerData.forEach(item => {
@@ -900,10 +872,18 @@ app.post("/api/recommend-courses", (req, res) => {
   const interest = (interest_areas || '').toLowerCase().trim();
 
   // ── Query: fetch all eligible courses for the stream ─────────────────────
-  const query = `
+  let query = `
     SELECT c.id, c.name, c.stream, c.min_percentage, c.description, c.youtube_id, c.duration_months
     FROM courses c
     WHERE (c.stream = ? OR c.stream = 'All') AND c.min_percentage <= ?
+  `;
+
+  // If percentage is low (below 50), prioritize Diploma courses
+  if (parseFloat(percentage) < 50) {
+    query += ` AND c.name LIKE '%Diploma%'`;
+  }
+
+  query += `
     GROUP BY c.id, c.name, c.stream
     ORDER BY c.min_percentage DESC, c.id ASC
     LIMIT 60
