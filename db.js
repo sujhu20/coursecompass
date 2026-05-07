@@ -2,8 +2,12 @@
 // Uses PostgreSQL when DATABASE_URL exists (Vercel/Production)
 // Uses SQLite when DATABASE_URL is missing (Local Development)
 
-const dbUrl = process.env.SUPABASE_URL || process.env.DATABASE_URL || '';
-const isPostgres = dbUrl.length > 5 && dbUrl.startsWith('postgres');
+let dbUrl = process.env.SUPABASE_URL || process.env.DATABASE_URL || '';
+
+// STRICT SANITIZATION: Remove any whitespace or accidental '*' characters
+dbUrl = dbUrl.trim().replace(/^\*+|\*+$/g, '');
+
+const isPostgres = dbUrl.length > 10 && dbUrl.startsWith('postgres');
 
 // Debug: log what URL we are using (hide password)
 if (dbUrl) {
