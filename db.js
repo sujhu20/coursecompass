@@ -131,6 +131,7 @@ if (isPostgres) {
     close() { pool.end(); }
   };
 
+  db.isPostgres = true;
   module.exports = db;
 
 } else {
@@ -145,5 +146,6 @@ if (isPostgres) {
     }
   });
 
+  db.isPostgres = false;
   module.exports = db;
 }

@@ -1596,7 +1596,13 @@ app.get("/api/youtube-info/:videoId", apiLimiter, (req, res) => {
 
 // ── Health Check ──
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', uptime: Math.floor(process.uptime()), timestamp: new Date().toISOString(), version: '1.0.0' });
+  const dbStatus = require('./db').isPostgres ? 'PostgreSQL' : 'SQLite';
+  res.json({ 
+    status: 'ok', 
+    database: dbStatus,
+    env_detected: !!(process.env.SUPABASE_URL || process.env.DATABASE_URL),
+    version: '1.0.1'
+  });
 });
 
 // ── 404 Handler ──
