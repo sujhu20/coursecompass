@@ -716,10 +716,12 @@ app.post("/api/recommend-courses", (req, res) => {
     FROM courses c
     WHERE (c.stream = ? OR c.stream = 'All') AND c.min_percentage <= ?
   `;
+  let queryParams = [stream, percentage];
 
   // If percentage is low (below 50), prioritize Diploma courses
   if (parseFloat(percentage) < 50) {
-    query += ` AND c.name LIKE '%Diploma%'`;
+    query += ` AND c.name LIKE ?`;
+    queryParams.push('%Diploma%');
   }
 
   query += `
@@ -727,8 +729,11 @@ app.post("/api/recommend-courses", (req, res) => {
     LIMIT 60
   `;
 
-  db.all(query, [stream, percentage], (err, courses) => {
-    if (err) return res.status(500).json({ message: "Database error", success: false });
+  db.all(query, queryParams, (err, courses) => {
+    if (err) {
+      console.error('RECOMMEND ERROR:', err.message);
+      return res.status(500).json({ message: "Database error", success: false });
+    }
     if (!courses || courses.length === 0) {
       return res.status(200).json({ message: "No courses found matching your criteria. Try other streams.", success: true, courses: [] });
     }
