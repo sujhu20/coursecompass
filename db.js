@@ -25,6 +25,8 @@ if (isMySQL) {
       mySQL = mySQL.replace(/INSERT OR IGNORE/gi, 'INSERT IGNORE');
       mySQL = mySQL.replace(/AUTOINCREMENT/gi, 'AUTO_INCREMENT');
       
+      console.log('DEBUG RUN:', mySQL, params);
+      
       try {
         const [result] = await pool.execute(mySQL, params || []);
         if (callback) {
