@@ -1,5 +1,4 @@
 const express = require("express");
-const sqlite3 = require("sqlite3").verbose();
 const bcrypt = require("bcrypt");
 const cors = require("cors");
 const path = require("path");
@@ -127,174 +126,112 @@ app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'login.html'));
 });
 
-// Health check endpoint for monitoring (Render/Railway)
-app.get('/api/health', (req, res) => {
-  res.status(200).json({ status: 'ok', timestamp: new Date().toISOString() });
-});
+// Database connection (PostgreSQL via wrapper)
+const db = require('./db');
+console.log("Database connected (PostgreSQL)");
 
-// Database connection
-const db = new sqlite3.Database("./database.db", (err) => {
-  if (err) {
-    console.error("Database connection failed");
-  } else {
-    console.log("Database connected");
-  }
-});
 
 // ==================== DATABASE TABLES ====================
 
-// Create users table (with profile fields)
-db.run(`
-  CREATE TABLE IF NOT EXISTS users (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    email TEXT UNIQUE NOT NULL,
-    password TEXT NOT NULL,
-    name TEXT,
-    stream TEXT,
-    percentage REAL,
-    interests TEXT,
-    profile_photo TEXT,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    is_admin INTEGER DEFAULT 0
-  )
-`);
+// Create all tables using PostgreSQL syntax
+db.run(`CREATE TABLE IF NOT EXISTS users (
+  id SERIAL PRIMARY KEY,
+  email TEXT UNIQUE NOT NULL,
+  password TEXT NOT NULL,
+  name TEXT,
+  stream TEXT,
+  percentage REAL,
+  interests TEXT,
+  profile_photo TEXT,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  is_admin INTEGER DEFAULT 0
+)`);
 
-// Create courses table
-db.run(`
-  CREATE TABLE IF NOT EXISTS courses (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT NOT NULL,
-    stream TEXT NOT NULL,
-    min_percentage REAL NOT NULL,
-    description TEXT,
-    youtube_id TEXT,
-    duration_months INTEGER
-  )
-`);
+db.run(`CREATE TABLE IF NOT EXISTS courses (
+  id SERIAL PRIMARY KEY,
+  name TEXT NOT NULL,
+  stream TEXT NOT NULL,
+  min_percentage REAL NOT NULL,
+  description TEXT,
+  youtube_id TEXT,
+  duration_months INTEGER
+)`);
 
-// Create eligibility_rules table
-db.run(`
-  CREATE TABLE IF NOT EXISTS eligibility_rules (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    course_id INTEGER,
-    required_stream TEXT,
-    min_percentage REAL,
-    required_subjects TEXT,
-    FOREIGN KEY(course_id) REFERENCES courses(id)
-  )
-`);
+db.run(`CREATE TABLE IF NOT EXISTS eligibility_rules (
+  id SERIAL PRIMARY KEY,
+  course_id INTEGER REFERENCES courses(id),
+  required_stream TEXT,
+  min_percentage REAL,
+  required_subjects TEXT
+)`);
 
-// Create career_map table
-db.run(`
-  CREATE TABLE IF NOT EXISTS career_map (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    course_id INTEGER,
-    career_name TEXT,
-    job_role TEXT,
-    description TEXT,
-    FOREIGN KEY(course_id) REFERENCES courses(id)
-  )
-`);
+db.run(`CREATE TABLE IF NOT EXISTS career_map (
+  id SERIAL PRIMARY KEY,
+  course_id INTEGER REFERENCES courses(id),
+  career_name TEXT,
+  job_role TEXT,
+  description TEXT
+)`);
 
-// Create salary_info table
-db.run(`
-  CREATE TABLE IF NOT EXISTS salary_info (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    career_id INTEGER,
-    entry_level_salary REAL,
-    mid_level_salary REAL,
-    senior_level_salary REAL,
-    FOREIGN KEY(career_id) REFERENCES career_map(id)
-  )
-`);
+db.run(`CREATE TABLE IF NOT EXISTS salary_info (
+  id SERIAL PRIMARY KEY,
+  career_id INTEGER REFERENCES career_map(id),
+  entry_level_salary REAL,
+  mid_level_salary REAL,
+  senior_level_salary REAL
+)`);
 
-// Enhance users table with profile fields (add columns if they don't exist)
-const userColumns = ['name TEXT', 'stream TEXT', 'percentage REAL', 'interests TEXT', 'profile_photo TEXT', 'created_at DATETIME DEFAULT CURRENT_TIMESTAMP', 'is_admin INTEGER DEFAULT 0'];
-userColumns.forEach(col => {
-  const colName = col.split(' ')[0];
-  db.run(`ALTER TABLE users ADD COLUMN ${col}`, (err) => {
-    // Silently ignore "duplicate column" errors
-  });
-});
+db.run(`CREATE TABLE IF NOT EXISTS bookmarks (
+  id SERIAL PRIMARY KEY,
+  user_id INTEGER NOT NULL REFERENCES users(id),
+  course_id INTEGER NOT NULL REFERENCES courses(id),
+  saved_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE(user_id, course_id)
+)`);
 
-// Create bookmarks table
-db.run(`
-  CREATE TABLE IF NOT EXISTS bookmarks (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    user_id INTEGER NOT NULL,
-    course_id INTEGER NOT NULL,
-    saved_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY(user_id) REFERENCES users(id),
-    FOREIGN KEY(course_id) REFERENCES courses(id),
-    UNIQUE(user_id, course_id)
-  )
-`);
+db.run(`CREATE TABLE IF NOT EXISTS progress (
+  id SERIAL PRIMARY KEY,
+  user_id INTEGER NOT NULL REFERENCES users(id),
+  course_id INTEGER NOT NULL REFERENCES courses(id),
+  status TEXT DEFAULT 'not_started' CHECK(status IN ('not_started', 'in_progress', 'completed')),
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE(user_id, course_id)
+)`);
 
-// Create progress table
-db.run(`
-  CREATE TABLE IF NOT EXISTS progress (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    user_id INTEGER NOT NULL,
-    course_id INTEGER NOT NULL,
-    status TEXT DEFAULT 'not_started' CHECK(status IN ('not_started', 'in_progress', 'completed')),
-    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY(user_id) REFERENCES users(id),
-    FOREIGN KEY(course_id) REFERENCES courses(id),
-    UNIQUE(user_id, course_id)
-  )
-`);
+db.run(`CREATE TABLE IF NOT EXISTS ratings (
+  id SERIAL PRIMARY KEY,
+  user_id INTEGER NOT NULL REFERENCES users(id),
+  course_id INTEGER NOT NULL REFERENCES courses(id),
+  stars INTEGER NOT NULL CHECK(stars >= 1 AND stars <= 5),
+  review TEXT,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE(user_id, course_id)
+)`);
 
-// Create ratings table
-db.run(`
-  CREATE TABLE IF NOT EXISTS ratings (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    user_id INTEGER NOT NULL,
-    course_id INTEGER NOT NULL,
-    stars INTEGER NOT NULL CHECK(stars >= 1 AND stars <= 5),
-    review TEXT,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY(user_id) REFERENCES users(id),
-    FOREIGN KEY(course_id) REFERENCES courses(id),
-    UNIQUE(user_id, course_id)
-  )
-`);
+db.run(`CREATE TABLE IF NOT EXISTS badges (
+  id SERIAL PRIMARY KEY,
+  user_id INTEGER NOT NULL REFERENCES users(id),
+  badge_type TEXT NOT NULL,
+  earned_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE(user_id, badge_type)
+)`);
 
-// Create badges table
-db.run(`
-  CREATE TABLE IF NOT EXISTS badges (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    user_id INTEGER NOT NULL,
-    badge_type TEXT NOT NULL,
-    earned_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY(user_id) REFERENCES users(id),
-    UNIQUE(user_id, badge_type)
-  )
-`);
+db.run(`CREATE TABLE IF NOT EXISTS streaks (
+  id SERIAL PRIMARY KEY,
+  user_id INTEGER NOT NULL UNIQUE REFERENCES users(id),
+  current_streak INTEGER DEFAULT 0,
+  longest_streak INTEGER DEFAULT 0,
+  last_visit DATE
+)`);
 
-// Create streaks table
-db.run(`
-  CREATE TABLE IF NOT EXISTS streaks (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    user_id INTEGER NOT NULL UNIQUE,
-    current_streak INTEGER DEFAULT 0,
-    longest_streak INTEGER DEFAULT 0,
-    last_visit DATE,
-    FOREIGN KEY(user_id) REFERENCES users(id)
-  )
-`);
-
-// Create notifications table
-db.run(`
-  CREATE TABLE IF NOT EXISTS notifications (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    user_id INTEGER NOT NULL,
-    message TEXT NOT NULL,
-    type TEXT DEFAULT 'info',
-    read INTEGER DEFAULT 0,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY(user_id) REFERENCES users(id)
-  )
-`);
+db.run(`CREATE TABLE IF NOT EXISTS notifications (
+  id SERIAL PRIMARY KEY,
+  user_id INTEGER NOT NULL REFERENCES users(id),
+  message TEXT NOT NULL,
+  type TEXT DEFAULT 'info',
+  read INTEGER DEFAULT 0,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+)`);
 
 // ── Performance Indexes (delayed to ensure tables exist) ──
 setTimeout(() => {
@@ -1611,8 +1548,13 @@ app.use((req, res) => {
   res.status(404).json({ error: true, message: 'Not found', code: 404 });
 });
 
-// Start server
+// Start server (only when not running as a Vercel serverless function)
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
-});
+if (process.env.VERCEL !== '1') {
+  app.listen(PORT, () => {
+    console.log(`Server running on http://localhost:${PORT}`);
+  });
+}
+
+// Export for Vercel serverless
+module.exports = app;
