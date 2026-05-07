@@ -653,6 +653,61 @@ setTimeout(() => {
     ]}
   ];
 
+  careerData.forEach(item => {
+    db.get(`SELECT id FROM courses WHERE name = ?`, [item.courseName], (err, course) => {
+      if (course) {
+        item.careers.forEach(career => {
+          db.run(
+            `INSERT OR IGNORE INTO career_map (course_id, career_name, job_role, description) VALUES (?, ?, ?, ?)`,
+            [course.id, career.name, career.role, `${career.name} position`],
+            function(err) {
+              if (!err) {
+                db.run(
+                  `INSERT OR IGNORE INTO salary_info (career_id, entry_level_salary, mid_level_salary, senior_level_salary) VALUES (?, ?, ?, ?)`,
+                  [this.lastID, career.salary[0], career.salary[1], career.salary[2]]
+                );
+              }
+            }
+          );
+        });
+      }
+    });
+  });
+}, 1000);
+
+// ==================== RECOMMENDATION ENDPOINT ====================
+
+// Get course recommendations based on student profile
+app.post("/api/recommend-courses", (req, res) => {
+  const { stream, percentage, interest_areas } = req.body;
+
+  if (!stream || percentage === undefined) {
+    return res.status(400).json({ message: "Stream and percentage required", success: false });
+  }
+  if (percentage < 33 || percentage > 100) {
+    return res.status(400).json({ message: "Percentage must be between 33-100", success: false });
+  }
+
+  // ── Interest filter maps ─────────────────────────────────────────────────
+  const interestCourseMap = {
+    medical:     ['mbbs', 'bds (bachelor'],
+    nursing:     ['b.sc nursing'],
+    pharmacy:    ['b.pharm'],
+    biotech:     ['b.sc biotechnology', 'b.sc microbiology', 'b.sc genetics'],
+    engineering: ['b.tech computer science', 'b.tech artificial intelligence', 'b.tech electronics', 'b.tech mechanical', 'b.tech civil', 'b.tech electrical', 'b.tech chemical', 'b.arch'],
+    data:        ['b.tech artificial intelligence', 'b.sc data science', 'bca data analytics'],
+    computing:   ['bca information technology', 'bca cybersecurity', 'bca data analytics', 'b.sc computer science', 'b.sc data science', 'b.tech cybersecurity', 'b.tech computer science'],
+    accounting:  ['chartered accountancy', 'b.com (hons)', 'b.com economics'],
+    business:    ['bba business administration', 'bba digital marketing', 'bba business analytics'],
+    economics:   ['b.com economics', 'b.com (hons)'],
+    marketing:   ['bba digital marketing', 'bba business analytics'],
+    psychology:  ['ba psychology'],
+    journalism:  ['bjmc', 'ba english'],
+    law:         ['ba llb', 'bba llb'],
+    design:      ['b.des ui/ux', 'b.des fashion', 'b.des interior'],
+    hotel:       ['b.sc hotel management']
+  };
+
   const interest = (interest_areas || '').toLowerCase().trim();
 
   // ── Query: fetch all eligible courses for the stream ─────────────────────
@@ -883,128 +938,6 @@ app.get("/api/auth-status", (req, res) => {
   }
 });
 
-// ==================== RECOMMENDATION ENDPOINT ====================
-
-// Get course recommendations based on student profile
-app.post("/api/recommend-courses", (req, res) => {
-  const { stream, percentage, interest_areas } = req.body;
-
-  if (!stream || percentage === undefined) {
-    return res.status(400).json({ message: "Stream and percentage required", success: false });
-  }
-  if (percentage < 33 || percentage > 100) {
-    return res.status(400).json({ message: "Percentage must be between 33-100", success: false });
-  }
-
-  // ── Interest filter maps ─────────────────────────────────────────────────
-  // Map each dropdown value → exact course name substrings to match
-  const interestCourseMap = {
-    // Science – Medical (PCB)
-    medical:     ['mbbs', 'bds (bachelor'],
-    nursing:     ['b.sc nursing'],
-    pharmacy:    ['b.pharm'],
-    biotech:     ['b.sc biotechnology', 'b.sc microbiology', 'b.sc genetics'],
-    // Science – Engineering & Computing (PCM)
-    engineering: ['b.tech computer science', 'b.tech artificial intelligence', 'b.tech electronics', 'b.tech mechanical', 'b.tech civil', 'b.tech electrical', 'b.tech chemical', 'b.arch'],
-    data:        ['b.tech artificial intelligence', 'b.sc data science', 'bca data analytics'],
-    computing:   ['bca information technology', 'bca cybersecurity', 'bca data analytics', 'b.sc computer science', 'b.sc data science', 'b.tech cybersecurity', 'b.tech computer science'],
-    // Commerce
-    accounting:  ['chartered accountancy', 'b.com (hons)', 'b.com economics'],
-    business:    ['bba business administration', 'bba digital marketing', 'bba business analytics'],
-    economics:   ['b.com economics', 'b.com (hons)'],
-    marketing:   ['bba digital marketing', 'bba business analytics'],
-    // Humanities
-    psychology:  ['ba psychology'],
-    journalism:  ['bjmc', 'ba english'],
-    law:         ['ba llb', 'bba llb'],
-    // All Streams
-    design:      ['b.des ui/ux', 'b.des fashion', 'b.des interior'],
-    hotel:       ['b.sc hotel management']
-  };
-
-
-  const interest = (interest_areas || '').toLowerCase().trim();
-
-  // ── Query: fetch all eligible courses for the stream ─────────────────────
-  let query = `
-    SELECT c.id, c.name, c.stream, c.min_percentage, c.description, c.youtube_id, c.duration_months
-    FROM courses c
-    WHERE (c.stream = ? OR c.stream = 'All') AND c.min_percentage <= ?
-  `;
-
-  // If percentage is low (below 50), prioritize Diploma courses
-  if (parseFloat(percentage) < 50) {
-    query += ` AND c.name LIKE '%Diploma%'`;
-  }
-
-  query += `
-    ORDER BY c.min_percentage DESC, c.id ASC
-    LIMIT 60
-  `;
-
-  db.all(query, [stream, percentage], (err, courses) => {
-    if (err) {
-      console.error('CRITICAL: Recommendation DB Error:', err.message);
-      return res.status(500).json({ message: "Database error: " + err.message, success: false });
-    }
-    if (!courses || courses.length === 0) {
-      console.log('No courses found for:', stream, percentage);
-      return res.status(200).json({ message: "No courses found matching your criteria.", success: true, courses: [] });
-    }
-
-    // ── Apply interest filter ─────────────────────────────────────────────
-    let filtered = courses;
-    if (interest && interestCourseMap[interest]) {
-      const patterns = interestCourseMap[interest];
-      const matched = courses.filter(c => {
-        const lower = c.name.toLowerCase();
-        return patterns.some(p => lower.includes(p));
-      });
-      // Only apply filter if it yields results; otherwise fall back to all
-      if (matched.length > 0) filtered = matched;
-    }
-
-    const toProcess = filtered.slice(0, 12);
-
-    const pendingCourses = toProcess.map(course => new Promise((resolve) => {
-      const careerQuery = `
-        SELECT DISTINCT cm.id, cm.career_name, cm.job_role, si.entry_level_salary, si.mid_level_salary, si.senior_level_salary
-        FROM career_map cm
-        LEFT JOIN salary_info si ON cm.id = si.career_id
-        WHERE cm.course_id = ?
-        LIMIT 8
-      `;
-      db.all(careerQuery, [course.id], (err, careers) => {
-        resolve({
-          id: course.id,
-          name: course.name,
-          stream: course.stream,
-          min_percentage: course.min_percentage,
-          description: course.description,
-          youtube_id: course.youtube_id,
-          duration_months: course.duration_months,
-          eligibility: `${percentage}% meets minimum requirement of ${course.min_percentage}%`,
-          priority: percentage >= course.min_percentage + 15 ? "High" : percentage >= course.min_percentage + 5 ? "Medium" : "Low",
-          careers: careers || []
-        });
-      });
-    }));
-
-    Promise.all(pendingCourses).then(results => {
-      const seen = new Set();
-      const unique = results.filter(c => { if (seen.has(c.name)) return false; seen.add(c.name); return true; });
-      const order = { "High": 1, "Medium": 2, "Low": 3 };
-      unique.sort((a, b) => (order[a.priority] || 3) - (order[b.priority] || 3));
-      res.json({
-        message: "Courses found based on your eligibility",
-        success: true,
-        student_profile: { stream, percentage, interest_areas: interest_areas || "" },
-        total_courses: unique.length,
-        courses: unique
-      });
-    });
-  });
-});
 
 
 // Get all courses
