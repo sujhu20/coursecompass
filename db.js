@@ -4,22 +4,26 @@
 
 let dbUrl = process.env.SUPABASE_URL || process.env.DATABASE_URL || '';
 
-// STRICT SANITIZATION: Remove any whitespace or accidental '*' characters
-dbUrl = dbUrl.trim().replace(/^\*+|\*+$/g, '');
+// Debug exactly what we are seeing
+console.log('--- DB DEBUG START ---');
+console.log('Raw URL Length:', dbUrl.length);
+if (dbUrl) {
+  const parts = dbUrl.split('@');
+  if (parts.length > 1) {
+    console.log('Protocol/User Section:', parts[0].replace(/:[^:]+$/, ':***'));
+    console.log('Host/Port Section:', parts[1]);
+  } else {
+    console.log('URL format seems wrong (no @ symbol)');
+  }
+}
+console.log('--- DB DEBUG END ---');
 
+// Clean it
+dbUrl = dbUrl.trim().replace(/^\*+|\*+$/g, '');
 const isPostgres = dbUrl.length > 10 && dbUrl.startsWith('postgres');
 
-// Debug: log what URL we are using (hide password)
-if (dbUrl) {
-  const safeUrl = dbUrl.replace(/:([^@]+)@/, ':***@');
-  console.log('Database Connection Attempt:', isPostgres ? 'PostgreSQL' : 'SQLite');
-  if (isPostgres) console.log('URL Host:', safeUrl.split('@')[1]);
-}
-
 if (isPostgres) {
-  // ════════════════ POSTGRESQL MODE ════════════════
   const { Pool } = require('pg');
-  
   const pool = new Pool({
     connectionString: dbUrl,
     ssl: { rejectUnauthorized: false }
