@@ -8,3 +8,8 @@ uploads/
 .DS_Store
 *.swp
 *.swo
+
+# Migration scripts
+import_to_mysql.js
+export_to_mysql.js
+migration.sql
