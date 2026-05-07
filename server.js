@@ -1,5 +1,5 @@
 const express = require("express");
-const sqlite3 = require("sqlite3").verbose();
+// sqlite3 is loaded inside db.js when needed (local mode)
 const bcrypt = require("bcrypt");
 const cors = require("cors");
 const path = require("path");
@@ -132,14 +132,8 @@ app.get('/api/health', (req, res) => {
   res.status(200).json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
-// Database connection
-const db = new sqlite3.Database("./database.db", (err) => {
-  if (err) {
-    console.error("Database connection failed");
-  } else {
-    console.log("Database connected");
-  }
-});
+// Database connection (auto-detects: PostgreSQL on Vercel, SQLite locally)
+const db = require('./db');
 
 // ==================== DATABASE TABLES ====================
 
@@ -1611,8 +1605,13 @@ app.use((req, res) => {
   res.status(404).json({ error: true, message: 'Not found', code: 404 });
 });
 
-// Start server
+// Start server (skip listen on Vercel — it handles requests differently)
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
-});
+if (process.env.VERCEL !== '1') {
+  app.listen(PORT, () => {
+    console.log(`Server running on http://localhost:${PORT}`);
+  });
+}
+
+// Export for Vercel serverless
+module.exports = app;
