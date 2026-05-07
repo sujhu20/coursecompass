@@ -2,19 +2,22 @@
 // Uses PostgreSQL when DATABASE_URL exists (Vercel/Production)
 // Uses SQLite when DATABASE_URL is missing (Local Development)
 
-const isPostgres = !!process.env.DATABASE_URL;
+const dbUrl = process.env.SUPABASE_URL || process.env.DATABASE_URL || '';
+const isPostgres = dbUrl.length > 5 && dbUrl.startsWith('postgres');
 
-// Debug: log what DATABASE_URL looks like (hide password)
-const dbUrl = process.env.DATABASE_URL || 'NOT SET';
-const safeUrl = dbUrl.replace(/:([^@]+)@/, ':***@');
-console.log('DATABASE_URL:', safeUrl);
+// Debug: log what URL we are using (hide password)
+if (dbUrl) {
+  const safeUrl = dbUrl.replace(/:([^@]+)@/, ':***@');
+  console.log('Database Connection Attempt:', isPostgres ? 'PostgreSQL' : 'SQLite');
+  if (isPostgres) console.log('URL Host:', safeUrl.split('@')[1]);
+}
 
 if (isPostgres) {
   // ════════════════ POSTGRESQL MODE ════════════════
   const { Pool } = require('pg');
   
   const pool = new Pool({
-    connectionString: process.env.DATABASE_URL,
+    connectionString: dbUrl,
     ssl: { rejectUnauthorized: false }
   });
 
