@@ -653,6 +653,36 @@ setTimeout(() => {
     ]}
   ];
 
+  // ── Build Query ──
+  let query = `SELECT * FROM courses WHERE stream = ? AND min_percentage <= ?`;
+  let params = [stream, percentage];
+
+  // If percentage is low (below 50), prioritize Diploma courses
+  if (parseFloat(percentage) < 50) {
+    query = `SELECT * FROM courses WHERE stream = ? AND min_percentage <= ? AND name LIKE '%Diploma%'`;
+  }
+  
+  db.all(query, params, (err, rows) => {
+    if (err) return res.status(500).json({ message: "DB Error" });
+
+    // Filter courses based on interest areas if provided
+    let results = rows;
+    if (interest_areas && interest_areas.length > 0) {
+      results = results.filter(course => {
+        return interest_areas.some(area => 
+          interestCourseMap[area]?.some(keyword => 
+            course.name.toLowerCase().includes(keyword)
+          )
+        );
+      });
+    }
+
+    res.json({ success: true, data: results });
+  });
+});
+
+// Seed data
+setTimeout(() => {
   careerData.forEach(item => {
     db.get(`SELECT id FROM courses WHERE name = ?`, [item.courseName], (err, course) => {
       if (course) {
