@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Leaderboard | Career Course Compass</title>
+    <meta name="description" content="Top learners ranked by courses completed, badges, and streaks.">
+    <link rel="stylesheet" href="design-system.css">
+    <style>
+        .page-wrap { position: relative; z-index: 1; }
+        .container { max-width: 960px; margin: 0 auto; padding: 32px; }
+
+        .page-header { margin-bottom: 36px; text-align: center; }
+        .page-header h1 { font-size: 30px; margin-bottom: 8px; }
+        .page-header p { color: var(--text-400); font-size: 14px; }
+
+        /* ═══ CSS 3D PODIUM ═══ */
+        .podium-stage {
+            display: flex;
+            justify-content: center;
+            align-items: flex-end;
+            gap: 18px;
+            margin-bottom: 40px;
+            perspective: 900px;
+            min-height: 280px;
+            padding-top: 30px;
+        }
+        .podium-slot { text-align: center; }
+
+        /* 3D Block */
+        .podium-block {
+            width: 140px;
+            transform-style: preserve-3d;
+            transform: rotateX(-5deg) rotateY(-10deg);
+            position: relative;
+            animation: podiumRise 0.6s cubic-bezier(.22,.68,0,.98) both;
+        }
+        .podium-slot:nth-child(1) .podium-block { animation-delay: 0.2s; }
+        .podium-slot:nth-child(2) .podium-block { animation-delay: 0s; }
+        .podium-slot:nth-child(3) .podium-block { animation-delay: 0.4s; }
+        @keyframes podiumRise {
+            from { transform: rotateX(-5deg) rotateY(-10deg) translateY(40px); opacity: 0; }
+            to   { transform: rotateX(-5deg) rotateY(-10deg) translateY(0); opacity: 1; }
+        }
+
+        .p-top, .p-front, .p-side {
+            position: absolute;
+            width: 140px;
+            backface-visibility: hidden;
+        }
+        .p-top {
+            transform: rotateX(90deg) translateZ(0px);
+            transform-origin: bottom;
+        }
+        .p-front {
+            transform: translateZ(10px);
+        }
+        .p-side {
+            width: 20px;
+            right: -20px;
+            transform: rotateY(90deg);
+            transform-origin: left;
+        }
+
+        /* Gold */
+        .podium-gold .podium-block { height: 160px; }
+        .podium-gold .p-top   { height: 20px; background: linear-gradient(135deg, #FFD700, #FFA500); }
+        .podium-gold .p-front { height: 160px; background: linear-gradient(180deg, #FFD700 0%, #B8860B 100%); border-radius: 10px 10px 0 0; }
+        .podium-gold .p-side  { height: 160px; background: linear-gradient(180deg, #DAA520 0%, #8B6914 100%); border-radius: 0 10px 0 0; }
+
+        /* Silver */
+        .podium-silver .podium-block { height: 120px; }
+        .podium-silver .p-top   { height: 20px; background: linear-gradient(135deg, #C0C0C0, #A8A8A8); }
+        .podium-silver .p-front { height: 120px; background: linear-gradient(180deg, #C0C0C0, #808080); border-radius: 10px 10px 0 0; }
+        .podium-silver .p-side  { height: 120px; background: linear-gradient(180deg, #A0A0A0, #606060); border-radius: 0 10px 0 0; }
+
+        /* Bronze */
+        .podium-bronze .podium-block { height: 90px; }
+        .podium-bronze .p-top   { height: 20px; background: linear-gradient(135deg, #CD7F32, #A0522D); }
+        .podium-bronze .p-front { height: 90px; background: linear-gradient(180deg, #CD7F32, #8B4513); border-radius: 10px 10px 0 0; }
+        .podium-bronze .p-side  { height: 90px; background: linear-gradient(180deg, #A0522D, #6B3410); border-radius: 0 10px 0 0; }
+
+        /* Rank number on front */
+        .p-front { display: flex; align-items: center; justify-content: center; }
+        .p-rank {
+            font-size: 48px;
+            font-weight: 800;
+            opacity: 0.25;
+            font-family: var(--font-display);
+        }
+
+        /* Player info above podium */
+        .podium-info {
+            margin-bottom: 16px;
+        }
+        .podium-avatar {
+            width: 50px; height: 50px;
+            border-radius: 50%;
+            background: var(--bg-glass);
+            border: 2px solid var(--border);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 22px;
+            margin: 0 auto 8px;
+        }
+        .podium-gold .podium-avatar { border-color: #FFD700; box-shadow: 0 0 20px rgba(255,215,0,0.3); }
+        .podium-silver .podium-avatar { border-color: #C0C0C0; }
+        .podium-bronze .podium-avatar { border-color: #CD7F32; }
+
+        .podium-name {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--text-100);
+            margin-bottom: 4px;
+            font-family: var(--font-display);
+        }
+        .podium-score {
+            font-size: 20px;
+            font-weight: 800;
+            font-family: var(--font-mono);
+        }
+        .podium-gold .podium-score { color: #FFD700; }
+        .podium-silver .podium-score { color: #C0C0C0; }
+        .podium-bronze .podium-score { color: #CD7F32; }
+        .podium-detail {
+            font-size: 11px;
+            color: var(--text-500);
+            margin-top: 4px;
+            font-family: var(--font-mono);
+        }
+
+        /* ═══ TABLE ═══ */
+        .leader-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: var(--bg-glass);
+            backdrop-filter: blur(12px);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow-md);
+        }
+        .leader-table th {
+            padding: 14px 16px;
+            text-align: left;
+            font-size: 10px;
+            font-weight: 700;
+            color: var(--accent-indigo);
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            background: rgba(91,76,219,0.06);
+            border-bottom: 1px solid var(--border);
+            font-family: var(--font-mono);
+        }
+        .leader-table td {
+            padding: 14px 16px;
+            font-size: 14px;
+            color: var(--text-300);
+            border-bottom: 1px solid var(--border);
+        }
+        .leader-table tbody tr {
+            animation: rowSlideIn 0.35s both;
+            animation-delay: calc(var(--i, 0) * 50ms);
+        }
+        .leader-table tr:hover td { background: rgba(255,255,255,0.02); }
+        .rank-cell { font-weight: 800; color: var(--text-100); font-family: var(--font-mono); }
+        .name-cell { font-weight: 600; color: var(--text-200); font-family: var(--font-display); }
+        .score-cell { font-weight: 700; color: var(--accent-indigo); font-family: var(--font-mono); }
+        .you-row td { background: rgba(91,76,219,0.06) !important; border-left: 3px solid var(--accent-indigo); }
+
+        /* Top 3 get holographic shimmer */
+        .leader-table tbody tr:nth-child(1) td,
+        .leader-table tbody tr:nth-child(2) td,
+        .leader-table tbody tr:nth-child(3) td {
+            position: relative;
+        }
+
+        .empty-state { text-align: center; padding: 60px 20px; color: var(--text-400); }
+        .empty-state .icon { font-size: 48px; margin-bottom: 14px; }
+
+        @media (max-width: 768px) {
+            .container { padding: 16px; }
+            .podium-stage { flex-direction: column; align-items: center; min-height: auto; perspective: none; }
+            .podium-block { transform: none !important; }
+            .podium-slot { order: unset !important; }
+        }
+    </style>
+</head>
+<body>
+    <div id="navbar-container"></div>
+
+    <div class="ambient-blob blob-indigo"></div>
+    <div class="ambient-blob blob-emerald"></div>
+    <div class="float-cube" style="transform-style:preserve-3d"><div class="face"></div><div class="face"></div><div class="face"></div><div class="face"></div><div class="face"></div><div class="face"></div></div>
+    <div class="dot-grid"></div>
+
+    <div class="page-wrap">
+        <div class="container">
+            <div class="page-header">
+                <h1>🏆 <span class="gradient-text">Leaderboard</span></h1>
+                <p>Top learners ranked by courses completed, badges earned, and active streaks</p>
+            </div>
+
+            <div class="podium-stage" id="podium"></div>
+
+            <table class="leader-table" id="leaderTable">
+                <thead><tr><th>#</th><th>Student</th><th>✅ Courses</th><th>🏅 Badges</th><th>🔥 Streak</th><th>Score</th></tr></thead>
+                <tbody id="leaderBody"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        const userId = localStorage.getItem('userId') || sessionStorage.getItem('userId');
+        if (!userId) window.location.href = 'login.html';
+
+        function esc(s) {
+            if (!s) return '';
+            return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+        }
+
+        async function loadLeaderboard() {
+            try {
+                const res = await fetch('/api/leaderboard').then(r => r.json());
+                if (!res.success) return;
+                const lb = res.leaderboard;
+                const medals = ['🥇','🥈','🥉'];
+                const podClasses = ['podium-silver','podium-gold','podium-bronze']; // order: silver(left), gold(center), bronze(right)
+
+                // Podium: Gold center, Silver left, Bronze right
+                const podOrder = [1, 0, 2]; // silver, gold, bronze indices
+                document.getElementById('podium').innerHTML = podOrder.map(i => {
+                    if (!lb[i]) return '';
+                    const p = lb[i];
+                    const cls = podClasses[i];
+                    return `
+                        <div class="podium-slot ${cls}">
+                            <div class="podium-info holo-shimmer">
+                                <div class="podium-avatar">${medals[i]}</div>
+                                <div class="podium-name">${esc(p.name)}</div>
+                                <div class="podium-score" data-target="${p.score}">0</div>
+                                <div class="podium-detail">${p.courses_completed} courses • ${p.badges_earned} badges</div>
+                            </div>
+                            <div class="podium-block">
+                                <div class="p-top"></div>
+                                <div class="p-front"><span class="p-rank">${i + 1}</span></div>
+                                <div class="p-side"></div>
+                            </div>
+                        </div>`;
+                }).join('');
+
+                // Count-up scores
+                document.querySelectorAll('.podium-score[data-target]').forEach(el => {
+                    if (typeof animateCountUp === 'function') animateCountUp(el, parseInt(el.dataset.target), 1400);
+                    else el.textContent = el.dataset.target;
+                });
+
+                // Table
+                document.getElementById('leaderBody').innerHTML = lb.map((p, i) => `
+                    <tr class="${parseInt(p.user_id) === parseInt(userId) ? 'you-row' : ''}" style="--i:${i}">
+                        <td class="rank-cell">${i < 3 ? medals[i] : i + 1}</td>
+                        <td class="name-cell">${esc(p.name)}</td>
+                        <td class="mono-value">${p.courses_completed}</td>
+                        <td class="mono-value">${p.badges_earned}</td>
+                        <td class="mono-value">${p.streak}d</td>
+                        <td class="score-cell">${p.score}</td>
+                    </tr>`).join('') || '<tr><td colspan="6"><div class="empty-state"><div class="icon">🏆</div><p>No learners yet. Be the first!</p></div></td></tr>';
+            } catch (err) {
+                console.error('Leaderboard error:', err);
+            }
+        }
+
+        async function logout() {
+            try { await fetch('/logout'); } catch(e){}
+            localStorage.clear(); sessionStorage.clear();
+            window.location.href = 'login.html';
+        }
+
+        loadLeaderboard();
+    </script>
+    <script src="nav.js"></script>
+</body>
+</html>

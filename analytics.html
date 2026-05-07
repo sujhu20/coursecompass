@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Analytics | Career Course Compass</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box;font-family:'Inter',-apple-system,sans-serif}
+        body{min-height:100vh;background:#0a0e1a;color:#f1f5f9}
+        body::before{content:'';position:fixed;width:500px;height:500px;background:rgba(99,102,241,0.12);border-radius:50%;filter:blur(100px);top:-150px;right:-100px;pointer-events:none}
+        .nav{position:sticky;top:0;z-index:100;background:rgba(10,14,26,0.85);backdrop-filter:blur(20px);border-bottom:1px solid rgba(255,255,255,0.06);padding:0 32px}
+        .nav-inner{max-width:1300px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;height:64px}
+        .nav-logo{font-size:18px;font-weight:700;background:linear-gradient(135deg,#818cf8,#a78bfa);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+        .nav-links{display:flex;gap:6px;flex-wrap:wrap}
+        .nav-links a{color:#94a3b8;text-decoration:none;font-size:13px;font-weight:500;padding:8px 14px;border-radius:8px;transition:all 0.2s}
+        .nav-links a:hover,.nav-links a.active{color:#f1f5f9;background:rgba(99,102,241,0.15)}
+        .nav-links a.active{color:#a5b4fc}
+        .container{max-width:1100px;margin:0 auto;padding:32px;position:relative;z-index:1}
+        .page-header{margin-bottom:24px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px}
+        .page-header h1{font-size:28px;font-weight:700}
+        .page-header h1 span{background:linear-gradient(135deg,#818cf8,#c084fc);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+        .download-btn{background:linear-gradient(135deg,#6366f1,#a855f7);border:none;color:white;padding:12px 24px;border-radius:10px;cursor:pointer;font-size:14px;font-weight:600;transition:all 0.2s}
+        .download-btn:hover{transform:translateY(-1px);box-shadow:0 4px 15px rgba(99,102,241,0.3)}
+        .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px}
+        .panel{background:rgba(17,24,39,0.6);border:1px solid rgba(255,255,255,0.06);border-radius:16px;padding:22px}
+        .panel h3{font-size:15px;font-weight:700;margin-bottom:14px}
+        /* Donut chart via CSS */
+        .donut-container{display:flex;align-items:center;gap:20px}
+        .donut{width:120px;height:120px;border-radius:50%;position:relative;display:flex;align-items:center;justify-content:center}
+        .donut-center{width:80px;height:80px;border-radius:50%;background:#0a0e1a;position:absolute;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:800;color:#f1f5f9}
+        .donut-legend{display:flex;flex-direction:column;gap:6px}
+        .legend-item{display:flex;align-items:center;gap:8px;font-size:12px;color:#94a3b8}
+        .legend-dot{width:10px;height:10px;border-radius:50%}
+        /* Streak card */
+        .streak-panel{display:flex;gap:24px;align-items:center}
+        .streak-num{font-size:48px;font-weight:800;background:linear-gradient(135deg,#f59e0b,#f97316);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+        .streak-info{display:flex;flex-direction:column;gap:4px}
+        .streak-label{font-size:14px;color:#f1f5f9;font-weight:600}
+        .streak-sub{font-size:12px;color:#64748b}
+        /* Stream bars */
+        .stream-item{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+        .stream-name{font-size:12px;color:#94a3b8;width:80px}
+        .stream-bar-bg{flex:1;height:20px;background:rgba(255,255,255,0.04);border-radius:6px;overflow:hidden}
+        .stream-bar-fill{height:100%;border-radius:6px;display:flex;align-items:center;padding-left:8px;font-size:11px;font-weight:600;color:white;transition:width 0.8s ease}
+        /* Badge list */
+        .badge-list{display:flex;flex-wrap:wrap;gap:8px}
+        .badge-item{background:rgba(99,102,241,0.08);border:1px solid rgba(99,102,241,0.15);color:#a5b4fc;font-size:12px;padding:6px 14px;border-radius:20px;font-weight:500}
+        /* Activity list */
+        .activity-item{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.04);font-size:13px}
+        .activity-item:last-child{border-bottom:none}
+        .activity-name{color:#e2e8f0;font-weight:500}
+        .activity-status{font-size:11px;padding:3px 10px;border-radius:20px;font-weight:600}
+        .activity-status.completed{background:rgba(22,163,74,0.15);color:#22c55e}
+        .activity-status.in_progress{background:rgba(234,179,8,0.15);color:#eab308}
+        .activity-status.not_started{background:rgba(100,116,139,0.15);color:#94a3b8}
+        @media(max-width:768px){.grid-2{grid-template-columns:1fr}.container{padding:16px}.nav-links{display:none}}
+    </style>
+</head>
+<body>
+    <div id="navbar-container"></div>
+    <div class="container">
+        <div class="page-header">
+            <h1>📈 <span>My Analytics</span></h1>
+            <button class="download-btn" onclick="downloadReport()">📄 Download Career Report</button>
+        </div>
+        <div class="grid-2">
+            <div class="panel"><h3>📊 Course Progress</h3><div id="progressChart"></div></div>
+            <div class="panel"><h3>🔥 Streak Stats</h3><div id="streakPanel"></div></div>
+        </div>
+        <div class="grid-2">
+            <div class="panel"><h3>📚 Bookmarks by Stream</h3><div id="streamPanel"></div></div>
+            <div class="panel"><h3>🏅 Badges Earned</h3><div id="badgePanel"></div></div>
+        </div>
+        <div class="panel" style="margin-bottom:24px"><h3>🕐 Recent Activity</h3><div id="activityPanel"></div></div>
+    </div>
+    <script>
+        const userId=localStorage.getItem('userId')||sessionStorage.getItem('userId');
+        if(!userId)window.location.href='login.html';
+        async function loadAnalytics(){
+            const res=await fetch(`/api/analytics/${userId}`).then(r=>r.json());
+            if(!res.success)return;
+            const a=res.analytics;
+            // Progress donut
+            const completed=a.progressBreakdown.find(p=>p.status==='completed')?.count||0;
+            const inProgress=a.progressBreakdown.find(p=>p.status==='in_progress')?.count||0;
+            const notStarted=a.progressBreakdown.find(p=>p.status==='not_started')?.count||0;
+            const total=completed+inProgress+notStarted||1;
+            const pct=Math.round((completed/total)*100);
+            const deg1=(completed/total)*360;
+            const deg2=deg1+(inProgress/total)*360;
+            document.getElementById('progressChart').innerHTML=`
+                <div class="donut-container">
+                    <div class="donut" style="background:conic-gradient(#22c55e 0deg ${deg1}deg,#eab308 ${deg1}deg ${deg2}deg,#334155 ${deg2}deg 360deg)">
+                        <div class="donut-center">${pct}%</div>
+                    </div>
+                    <div class="donut-legend">
+                        <div class="legend-item"><div class="legend-dot" style="background:#22c55e"></div>Completed: ${completed}</div>
+                        <div class="legend-item"><div class="legend-dot" style="background:#eab308"></div>In Progress: ${inProgress}</div>
+                        <div class="legend-item"><div class="legend-dot" style="background:#334155"></div>Not Started: ${notStarted}</div>
+                    </div>
+                </div>`;
+            // Streak
+            document.getElementById('streakPanel').innerHTML=`
+                <div class="streak-panel">
+                    <div class="streak-num">${a.streak.current_streak||0}</div>
+                    <div class="streak-info">
+                        <div class="streak-label">Current Streak</div>
+                        <div class="streak-sub">Longest: ${a.streak.longest_streak||0} days</div>
+                    </div>
+                </div>`;
+            // Bookmarks by stream
+            const colors={Science:'#3b82f6',Commerce:'#10b981',Humanities:'#f59e0b'};
+            const maxBm=Math.max(...a.bookmarksByStream.map(s=>s.count),1);
+            document.getElementById('streamPanel').innerHTML=a.bookmarksByStream.length?
+                a.bookmarksByStream.map(s=>`<div class="stream-item"><span class="stream-name">${s.stream}</span><div class="stream-bar-bg"><div class="stream-bar-fill" style="width:${(s.count/maxBm)*100}%;background:${colors[s.stream]||'#818cf8'}">${s.count}</div></div></div>`).join('')
+                :'<p style="color:#475569;font-size:13px">No bookmarks yet</p>';
+            // Badges
+            document.getElementById('badgePanel').innerHTML=a.badges.length?
+                '<div class="badge-list">'+a.badges.map(b=>`<span class="badge-item">🏅 ${b.badge_name.replace(/_/g,' ')}</span>`).join('')+'</div>'
+                :'<p style="color:#475569;font-size:13px">No badges yet — keep going!</p>';
+            // Activity
+            document.getElementById('activityPanel').innerHTML=a.recentActivity.length?
+                a.recentActivity.map(r=>`<div class="activity-item"><span class="activity-name">${r.name} <span style="color:#64748b;font-size:11px">(${r.stream})</span></span><span class="activity-status ${r.status}">${r.status.replace('_',' ')}</span></div>`).join('')
+                :'<p style="color:#475569;font-size:13px">No activity yet</p>';
+        }
+        async function downloadReport(){
+            const res=await fetch(`/api/report/${userId}`).then(r=>r.json());
+            if(!res.success)return;
+            const r=res.report;
+            let text=`CAREER COURSE COMPASS — STUDENT REPORT\n${'═'.repeat(50)}\nGenerated: ${new Date(r.generatedAt).toLocaleString()}\n\nSTUDENT PROFILE\n${'─'.repeat(30)}\nName: ${r.student.name}\nEmail: ${r.student.email}\n\nLEARNING STREAK\n${'─'.repeat(30)}\nCurrent: ${r.streak.current_streak} days\nLongest: ${r.streak.longest_streak} days\n\nBADGES EARNED (${r.badges.length})\n${'─'.repeat(30)}\n`;
+            r.badges.forEach(b=>{text+=`🏅 ${b.badge_name.replace(/_/g,' ')} — ${new Date(b.earned_at).toLocaleDateString()}\n`});
+            text+=`\nBOOKMARKED COURSES (${r.bookmarks.length})\n${'─'.repeat(30)}\n`;
+            r.bookmarks.forEach(b=>{text+=`📚 ${b.name} (${b.stream})\n`});
+            text+=`\nCOURSE PROGRESS (${r.courses.length})\n${'─'.repeat(30)}\n`;
+            r.courses.forEach(c=>{text+=`${c.status==='completed'?'✅':c.status==='in_progress'?'🔄':'📋'} ${c.name} — ${c.status.replace('_',' ')}\n`});
+            text+=`\n${'═'.repeat(50)}\nCareer Course Compass © 2026`;
+            const blob=new Blob([text],{type:'text/plain'});
+            const a=document.createElement('a');
+            a.href=URL.createObjectURL(blob);
+            a.download=`career_report_${r.student.name.replace(/\s/g,'_')}.txt`;
+            a.click();
+        }
+        async function logout() {
+            try { await fetch('/logout'); } catch(e){}
+            localStorage.clear();
+            sessionStorage.clear();
+            window.location.href = 'login.html';
+        }
+        loadAnalytics();
+    </script>
+    <script src="nav.js"></script>
+</body>
+</html>

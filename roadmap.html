@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Career Roadmap | Career Course Compass</title>
+    <link rel="stylesheet" href="design-system.css">
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box;font-family:var(--font-sans)}
+        body{min-height:100vh;background:var(--bg-page);color:var(--text-primary)}
+
+        .nav{position:sticky;top:0;z-index:100;background:rgba(10,14,26,0.85);backdrop-filter:blur(20px);border-bottom:1px solid rgba(255,255,255,0.06);padding:0 32px}
+        .nav-inner{max-width:1300px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;height:64px}
+        .nav-logo{font-size:18px;font-weight:700;background:linear-gradient(135deg,#818cf8,#a78bfa);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+        .nav-links{display:flex;gap:6px;flex-wrap:wrap}
+        .nav-links a{color:#94a3b8;text-decoration:none;font-size:13px;font-weight:500;padding:8px 14px;border-radius:8px;transition:all 0.2s}
+        .nav-links a:hover,.nav-links a.active{color:#f1f5f9;background:rgba(99,102,241,0.15)}
+        .nav-links a.active{color:#a5b4fc}
+        .container{max-width:900px;margin:0 auto;padding:32px;position:relative;z-index:1}
+        .page-header{margin-bottom:24px;text-align:center}
+        .page-header h1{font-size:28px;font-weight:700;margin-bottom:6px}
+        .page-header h1 span{background:linear-gradient(135deg,#818cf8,#c084fc);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+        .page-header p{color:#64748b;font-size:14px}
+        /* Selector */
+        .selector{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:20px;margin-bottom:32px;display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap;box-shadow:var(--shadow-sm)}
+        .selector label{font-size:12px;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:0.05em;display:block;margin-bottom:6px}
+        .selector select{flex:1;min-width:200px;background:#fff;border:1px solid var(--border);color:var(--text-primary);padding:10px 14px;border-radius:var(--radius-sm);font-size:14px;cursor:pointer}
+        .selector select option{background:#fff}
+        .gen-btn{background:var(--primary);border:none;color:white;padding:12px 24px;border-radius:var(--radius-sm);cursor:pointer;font-size:14px;font-weight:600;white-space:nowrap}
+        .gen-btn:hover{transform:translateY(-1px);background:var(--primary-hover)}
+        /* Timeline */
+        .timeline{position:relative;padding-left:40px}
+        .timeline::before{content:'';position:absolute;left:15px;top:0;bottom:0;width:3px;background:linear-gradient(180deg,var(--primary),#6366f1,#ec4899);border-radius:3px}
+        .timeline-step{position:relative;margin-bottom:32px;animation:fadeInUp 0.4s ease forwards;opacity:0}
+        .timeline-step:nth-child(1){animation-delay:0.1s}
+        .timeline-step:nth-child(2){animation-delay:0.2s}
+        .timeline-step:nth-child(3){animation-delay:0.3s}
+        .timeline-step:nth-child(4){animation-delay:0.4s}
+        .timeline-step:nth-child(5){animation-delay:0.5s}
+        .timeline-step:nth-child(6){animation-delay:0.6s}
+        @keyframes fadeInUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+        .timeline-dot{position:absolute;left:-33px;top:6px;width:28px;height:28px;background:#fff;border:3px solid var(--primary);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;z-index:2}
+        .step-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:20px;transition:all 0.3s;box-shadow:var(--shadow-sm)}
+        .step-card:hover{border-color:rgba(67,56,202,0.2)}
+        .step-year{font-size:11px;font-weight:700;color:var(--primary);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:4px}
+        .step-title{font-size:16px;font-weight:700;color:var(--text-primary);margin-bottom:6px}
+        .step-desc{font-size:13px;color:var(--text-muted);line-height:1.5;margin-bottom:12px}
+        .task-list{display:flex;flex-wrap:wrap;gap:6px}
+        .task-item{font-size:11px;background:rgba(67,56,202,0.06);border:1px solid rgba(67,56,202,0.12);color:var(--primary);padding:4px 10px;border-radius:20px}
+        /* Career Paths */
+        .careers-section{margin-top:32px}
+        .careers-section h2{font-size:18px;font-weight:700;margin-bottom:16px}
+        .career-path{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:16px;margin-bottom:12px;transition:all 0.3s;box-shadow:var(--shadow-sm)}
+        .career-path:hover{border-color:rgba(5,150,105,0.2)}
+        .career-name{font-size:14px;font-weight:700;color:var(--text-primary)}
+        .career-role{font-size:12px;color:var(--text-muted);margin-bottom:8px}
+
+        .empty-state{text-align:center;padding:60px;color:var(--text-muted)}
+        .empty-state .icon{font-size:48px;margin-bottom:12px}
+        @media(max-width:768px){.container{padding:16px}.nav-links{display:none}.selector{flex-direction:column}}
+    </style>
+</head>
+<body>
+    <div id="navbar-container"></div>
+    <div class="container">
+        <div class="page-header">
+            <h1>🗺️ <span>Career Roadmap</span></h1>
+            <p>Visual step-by-step timeline from education to career success</p>
+        </div>
+        <div class="selector">
+            <div style="flex:1;min-width:200px"><label>Select a Course</label><select id="courseSelect"><option value="">Choose a course...</option></select></div>
+            <button class="gen-btn" onclick="generateRoadmap()">🗺️ Generate Roadmap</button>
+        </div>
+        <div id="roadmapContent">
+            <div class="empty-state"><div class="icon">🗺️</div><p>Select a course above to generate your personalized career roadmap</p></div>
+        </div>
+    </div>
+    <script>
+        if (!(localStorage.getItem('userId')||sessionStorage.getItem('userId'))) window.location.href='login.html';
+        fetch('/api/all-courses').then(r=>r.json()).then(d=>{
+            if(d.success) document.getElementById('courseSelect').innerHTML='<option value="">Choose a course...</option>'+d.courses.map(c=>`<option value="${c.id}">${c.name} (${c.stream})</option>`).join('');
+        });
+        async function generateRoadmap(){
+            const id=document.getElementById('courseSelect').value;
+            if(!id){alert('Please select a course');return}
+            const res=await fetch(`/api/career-roadmap/${id}`).then(r=>r.json());
+            if(!res.success)return;
+            let html='<div class="timeline">';
+            res.roadmap.forEach(s=>{
+                html+=`<div class="timeline-step"><div class="timeline-dot">${s.icon}</div><div class="step-card">
+                    <div class="step-year">${s.year} — ${s.phase}</div>
+                    <div class="step-title">${s.title}</div>
+                    <div class="step-desc">${s.description}</div>
+                    <div class="task-list">${s.tasks.map(t=>`<span class="task-item">✓ ${t}</span>`).join('')}</div>
+                </div></div>`;
+            });
+            html+='</div>';
+            if(res.careerPaths.length){
+                html+=`<div class="careers-section"><h2>🎯 ${res.totalCareers} Career Paths Available</h2>`;
+                res.careerPaths.forEach(c=>{
+                    html+=`<div class="career-path"><div class="career-name">${c.name}</div><div class="career-role">${c.role||''}</div></div>`;
+                });
+                html+='</div>';
+            }
+            document.getElementById('roadmapContent').innerHTML=html;
+        }
+        async function logout() {
+            try { await fetch('/logout'); } catch(e){}
+            localStorage.clear();
+            sessionStorage.clear();
+            window.location.href = 'login.html';
+        }
+    </script>
+    <script src="nav.js"></script>
+</body>
+</html>

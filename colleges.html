@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>College Finder | Career Course Compass</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box;font-family:'Inter',-apple-system,sans-serif}
+        body{min-height:100vh;background:#0a0e1a;color:#f1f5f9}
+        body::before{content:'';position:fixed;width:500px;height:500px;background:rgba(245,158,11,0.08);border-radius:50%;filter:blur(100px);top:-150px;right:-100px;pointer-events:none}
+        .nav{position:sticky;top:0;z-index:100;background:rgba(10,14,26,0.85);backdrop-filter:blur(20px);border-bottom:1px solid rgba(255,255,255,0.06);padding:0 32px}
+        .nav-inner{max-width:1300px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;height:64px}
+        .nav-logo{font-size:18px;font-weight:700;background:linear-gradient(135deg,#818cf8,#a78bfa);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+        .nav-links{display:flex;gap:6px;flex-wrap:wrap}
+        .nav-links a{color:#94a3b8;text-decoration:none;font-size:13px;font-weight:500;padding:8px 14px;border-radius:8px;transition:all 0.2s}
+        .nav-links a:hover,.nav-links a.active{color:#f1f5f9;background:rgba(99,102,241,0.15)}
+        .nav-links a.active{color:#a5b4fc}
+        .container{max-width:1300px;margin:0 auto;padding:32px;position:relative;z-index:1}
+        .page-header{margin-bottom:20px}.page-header h1{font-size:28px;font-weight:700;margin-bottom:6px}
+        .page-header h1 span{background:linear-gradient(135deg,#f59e0b,#f97316);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+        .page-header p{color:#64748b;font-size:14px}
+        .filter-panel{background:rgba(17,24,39,0.6);border:1px solid rgba(255,255,255,0.06);border-radius:16px;padding:20px;margin-bottom:24px;display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap}
+        .filter-group{flex:1;min-width:160px}
+        .filter-group label{display:block;font-size:12px;color:#64748b;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px}
+        .filter-group select,.filter-group input{width:100%;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);color:#e2e8f0;padding:10px 14px;border-radius:10px;font-size:14px}
+        .filter-group select option{background:#1e293b}
+        .search-btn{background:linear-gradient(135deg,#f59e0b,#f97316);border:none;color:#1e293b;padding:12px 24px;border-radius:10px;cursor:pointer;font-size:14px;font-weight:700;white-space:nowrap}
+        .search-btn:hover{transform:translateY(-1px)}
+        .results-count{font-size:13px;color:#64748b;margin-bottom:16px}
+        .college-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(380px,1fr));gap:16px}
+        .college-card{background:rgba(17,24,39,0.6);border:1px solid rgba(255,255,255,0.06);border-radius:16px;padding:22px;transition:all 0.3s;position:relative}
+        .college-card:hover{border-color:rgba(245,158,11,0.3);transform:translateY(-2px)}
+        .college-rank{position:absolute;top:16px;right:16px;background:rgba(245,158,11,0.12);color:#fbbf24;font-size:12px;font-weight:700;padding:4px 10px;border-radius:20px}
+        .college-card h3{font-size:16px;font-weight:700;color:#f1f5f9;margin-bottom:2px;padding-right:60px}
+        .college-location{font-size:12px;color:#64748b;margin-bottom:10px}
+        .college-tags{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+        .college-tag{font-size:11px;padding:3px 10px;border-radius:20px;font-weight:600}
+        .college-tag.govt{background:rgba(16,185,129,0.12);color:#34d399}
+        .college-tag.pvt{background:rgba(168,85,247,0.12);color:#c084fc}
+        .college-tag.stream{background:rgba(59,130,246,0.12);color:#60a5fa}
+        .college-meta{display:flex;flex-direction:column;gap:4px;margin-bottom:10px}
+        .college-meta-item{font-size:12px;color:#94a3b8}
+        .college-meta-item strong{color:#f1f5f9}
+        .highlights{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+        .highlight{font-size:10px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.06);color:#94a3b8;padding:3px 8px;border-radius:6px}
+        .visit-btn{display:inline-block;background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.2);color:#fbbf24;font-size:12px;padding:8px 16px;border-radius:8px;cursor:pointer;text-decoration:none;font-weight:500;transition:all 0.2s}
+        .visit-btn:hover{background:rgba(245,158,11,0.25)}
+        @media(max-width:768px){.container{padding:16px}.college-grid{grid-template-columns:1fr}.nav-links{display:none}.filter-panel{flex-direction:column}}
+    </style>
+</head>
+<body>
+    <div id="navbar-container"></div>
+    <div class="container">
+        <div class="page-header">
+            <h1>🏫 <span>College Finder</span></h1>
+            <p>Find the best colleges matching your stream and percentage</p>
+        </div>
+        <div class="filter-panel">
+            <div class="filter-group"><label>Stream</label><select id="streamFilter"><option value="">All Streams</option><option value="Science">Science</option><option value="Commerce">Commerce</option><option value="Humanities">Humanities</option></select></div>
+            <div class="filter-group"><label>Your Percentage</label><input type="number" id="pctFilter" placeholder="e.g. 85" min="33" max="100"></div>
+            <button class="search-btn" onclick="findColleges()">🔍 Find Colleges</button>
+        </div>
+        <div class="results-count" id="resultsCount"></div>
+        <div class="college-grid" id="collegeGrid"></div>
+    </div>
+    <script>
+        if(!(localStorage.getItem('userId')||sessionStorage.getItem('userId')))window.location.href='login.html';
+        async function findColleges(){
+            const stream=document.getElementById('streamFilter').value;
+            const pct=document.getElementById('pctFilter').value;
+            let url='/api/colleges?';
+            if(stream)url+=`stream=${stream}&`;
+            if(pct)url+=`minPercentage=${pct}`;
+            const res=await fetch(url).then(r=>r.json());
+            if(res.success){
+                document.getElementById('resultsCount').textContent=`${res.total} colleges found`;
+                document.getElementById('collegeGrid').innerHTML=res.colleges.map(c=>`
+                    <div class="college-card">
+                        <span class="college-rank">#${c.ranking}</span>
+                        <h3>${c.name}</h3>
+                        <div class="college-location">📍 ${c.city}, ${c.state}</div>
+                        <div class="college-tags">
+                            <span class="college-tag ${c.type==='Government'?'govt':'pvt'}">${c.type}</span>
+                            <span class="college-tag stream">${c.stream}</span>
+                        </div>
+                        <div class="college-meta">
+                            <div class="college-meta-item">📚 <strong>Courses:</strong> ${c.courses.join(', ')}</div>
+                            <div class="college-meta-item">💰 <strong>Fees:</strong> ${c.fees}</div>
+                            <div class="college-meta-item">📊 <strong>Min %:</strong> ${c.minPercentage}%</div>
+                        </div>
+                        <div class="highlights">${c.highlights.map(h=>`<span class="highlight">⭐ ${h}</span>`).join('')}</div>
+                        <a href="${c.website}" target="_blank" class="visit-btn">🌐 Visit Website →</a>
+                    </div>`).join('');
+            }
+        }
+        async function logout() {
+            try { await fetch('/logout'); } catch(e){}
+            localStorage.clear();
+            sessionStorage.clear();
+            window.location.href = 'login.html';
+        }
+        findColleges();
+    </script>
+    <script src="nav.js"></script>
+</body>
+</html>

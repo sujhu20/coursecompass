@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Course Details | Career Course Compass</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Detailed course information with career paths and learning resources.">
+    <link rel="stylesheet" href="design-system.css">
+    <style>
+        :root {
+            --bg-card: #fffdf9;
+            --bg-glass: rgba(245,242,237,0.8);
+            --border-glass: #e8e4dd;
+            --accent-primary: #4338ca;
+            --accent-secondary: #6366f1;
+            --accent-gradient: linear-gradient(135deg,#4338ca,#6366f1);
+            --text-primary: #111827;
+            --text-secondary: #374151;
+            --text-muted: #6b7280;
+        }
+        *{margin:0;padding:0;box-sizing:border-box}
+
+        body{
+            font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;
+            background:var(--bg-page);
+            min-height:100vh;
+            color:var(--text-primary);
+            overflow-x:hidden;
+        }
+
+        .container{max-width:960px;margin:0 auto;padding:18px;position:relative;z-index:1}
+
+        .top-bar{
+            display:flex;justify-content:space-between;align-items:center;
+            padding:13px 22px;background:var(--bg-glass);
+            border:1px solid var(--border-glass);border-radius:14px;
+            margin-bottom:28px;
+        }
+        .top-bar h1{
+            font-size:1.1rem;font-weight:700;
+            background:var(--accent-gradient);
+            -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+        }
+
+        .btn{
+            padding:9px 17px;border:none;border-radius:9px;
+            font-size:13px;font-weight:600;cursor:pointer;
+            transition:all 0.25s;font-family:inherit;
+            display:inline-flex;align-items:center;gap:6px;
+        }
+        .btn-ghost{background:var(--bg-subtle);border:1px solid var(--border);color:var(--text-secondary)}
+        .btn-ghost:hover{background:var(--bg-hover);color:var(--text-primary)}
+        .btn-accent{background:var(--accent-gradient);color:#fff}
+        .btn-accent:hover{transform:translateY(-2px);box-shadow:0 4px 11px rgba(67,56,202,0.18)}
+
+        .section-card{
+            background:var(--bg-card);border:1px solid var(--border);
+            border-radius:var(--radius-lg);padding:28px;margin-bottom:18px;
+            box-shadow:var(--shadow-sm);
+        }
+        .section-title{
+            font-size:1.1rem;font-weight:700;margin-bottom:14px;
+            color:var(--text-primary);
+        }
+        .course-title{font-size:26px;font-weight:800;margin-bottom:17px;line-height:1.25}
+
+        .meta-grid{
+            display:grid;grid-template-columns:repeat(auto-fit,minmax(175px,1fr));
+            gap:11px;margin-bottom:22px;
+        }
+        .meta-item{
+            padding:14px;background:var(--bg-subtle);
+            border:1px solid var(--border);border-radius:11px;
+            border-left:3px solid var(--accent-primary);
+        }
+        .meta-label{font-size:11px;color:var(--text-muted);text-transform:uppercase;font-weight:700;letter-spacing:0.04em;margin-bottom:5px}
+        .meta-value{font-size:15px;font-weight:700;color:var(--text-primary)}
+
+        .desc-text{color:var(--text-secondary);line-height:1.75;font-size:0.94rem}
+        .desc-text strong{color:var(--text-primary)}
+
+        .skills-grid{
+            display:grid;grid-template-columns:repeat(auto-fit,minmax(135px,1fr));
+            gap:9px;margin-top:11px;
+        }
+        .skill-tag{
+            background:rgba(67,56,202,0.05);color:var(--accent-primary);
+            border:1px solid rgba(67,56,202,0.13);
+            padding:9px 13px;border-radius:8px;
+            text-align:center;font-weight:600;font-size:13px;
+        }
+
+        .resource-list{list-style:none;margin-top:11px}
+        .resource-list li{
+            padding:11px 15px;margin-bottom:7px;
+            background:var(--bg-subtle);border:1px solid var(--border);
+            border-radius:9px;border-left:3px solid var(--accent-primary);
+            font-size:13px;color:var(--text-secondary);
+        }
+        .resource-list li strong{color:var(--text-primary)}
+
+        .career-grid{
+            display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+            gap:14px;margin-top:15px;
+        }
+        .career-card{
+            background:var(--bg-subtle);border:1px solid var(--border);
+            border-radius:13px;padding:22px;
+            border-left:4px solid var(--accent-secondary);
+            transition:all 0.25s;
+        }
+        .career-card:hover{transform:translateY(-3px);border-color:rgba(67,56,202,0.18);box-shadow:var(--shadow-md)}
+
+        .career-name{font-size:1rem;font-weight:700;color:var(--text-primary);margin-bottom:5px}
+        .career-role{
+            font-size:13px;color:var(--accent-primary);font-weight:600;margin-bottom:11px;
+            display:inline-block;background:rgba(67,56,202,0.05);padding:4px 9px;border-radius:5px;
+        }
+        .career-desc{font-size:13px;color:var(--text-muted);line-height:1.55;margin-bottom:13px}
+
+        .facts-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:11px;margin-top:11px}
+        .fact-box{border:1px solid var(--border);padding:17px;border-radius:11px;text-align:center;background:var(--bg-subtle)}
+        .fact-value{font-size:21px;font-weight:800;background:var(--accent-gradient);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+        .fact-label{font-size:11px;color:var(--text-muted);margin-top:5px;font-weight:600;text-transform:uppercase;letter-spacing:0.04em}
+
+        .action-footer{text-align:center;padding:35px 18px;margin-bottom:35px}
+        .no-data{text-align:center;color:var(--text-muted);padding:22px}
+
+        @media(max-width:768px){
+            .career-grid{grid-template-columns:1fr}
+            .top-bar{flex-direction:column;gap:11px}
+            .course-title{font-size:21px}
+            .section-card{padding:17px}
+        }
+    </style>
+    <script>
+        if (!localStorage.getItem('userId')) window.location.href = 'login.html';
+    </script>
+</head>
+<body>
+    <div id="navbar-container"></div>
+    <div class="container">
+        <div class="top-bar">
+            <h1>Course Details</h1>
+            <button class="btn btn-ghost" onclick="goBack()">← Back</button>
+        </div>
+
+        <div id="courseDetailsContainer"></div>
+
+        <div class="action-footer">
+            <p style="color:var(--text-secondary);margin-bottom:14px;">Want to explore more?</p>
+            <button class="btn btn-accent" onclick="document.querySelector('.section-card')?.scrollIntoView({behavior:'smooth'})" style="margin-right:7px;">Back to Top</button>
+            <button class="btn btn-ghost" onclick="goBack()">Find More Courses</button>
+        </div>
+    </div>
+
+    <script>
+        const courseId = new URLSearchParams(window.location.search).get('id');
+
+        window.addEventListener('DOMContentLoaded', () => {
+            if (!courseId) {
+                document.getElementById('courseDetailsContainer').innerHTML = `
+                    <div class="section-card"><div class="no-data"><p>No course selected. Go back and select one.</p></div></div>`;
+                return;
+            }
+            loadCourseDetails(courseId);
+        });
+
+        function loadCourseDetails(id) {
+            document.getElementById('courseDetailsContainer').innerHTML = `
+                <div class="section-card" style="text-align:center;padding:55px;">
+                    <p style="color:var(--text-secondary);">Loading course details...</p>
+                </div>`;
+
+            fetch(`/api/course/${id}`)
+                .then(r => { if (!r.ok) throw new Error('Course not found'); return r.json(); })
+                .then(data => { if (data.success && data.course) displayCourseDetails(data.course); else throw new Error('Invalid data'); })
+                .catch(err => {
+                    document.getElementById('courseDetailsContainer').innerHTML = `
+                        <div class="section-card" style="text-align:center;padding:60px;">
+                            <p style="color:#ef4444;font-size:17px;margin-bottom:11px;">${err.message}</p>
+                            <button class="btn btn-accent" onclick="goBack()">Go Back</button>
+                        </div>`;
+                });
+        }
+
+        function displayCourseDetails(course) {
+            const careerDescriptions = {
+                'General Physician': 'Diagnose and treat a wide range of health conditions. Provide primary healthcare and preventive medicine to patients.',
+                'Surgeon': 'Perform complex surgical operations to treat injuries, diseases, and deformities. Lead surgical teams in operating theatres.',
+                'Cardiologist': 'Specialize in diagnosing and treating heart and cardiovascular system disorders. Perform procedures like angioplasty.',
+                'Neurologist': 'Diagnose and treat disorders of the nervous system including the brain and spinal cord.',
+                'Dermatologist': 'Treat conditions related to skin, hair, and nails. Perform cosmetic and medical dermatological procedures.',
+                'Pediatrician': 'Provide medical care for infants, children, and adolescents. Monitor growth and developmental milestones.',
+                'Dental Surgeon': 'Perform dental surgeries and provide comprehensive oral healthcare including extractions and implants.',
+                'Orthodontist': 'Correct misaligned teeth and jaws using braces, aligners, and other orthodontic appliances.',
+                'Endodontist': 'Specialize in root canal treatments and diseases of the dental pulp.',
+                'Oral & Maxillofacial Surgeon': 'Perform complex surgeries on the mouth, jaw, and face including reconstructive procedures.',
+                'Prosthodontist': 'Design and fit artificial dental replacements including crowns, bridges, and dentures.',
+                'Hospital Pharmacist': 'Manage medication dispensing in hospitals. Ensure safe drug usage and advise medical staff.',
+                'Drug Inspector': 'Regulate pharmaceutical industry compliance. Inspect drug manufacturing facilities and enforce standards.',
+                'Pharmaceutical Sales Representative': 'Promote and sell pharmaceutical products to healthcare providers and hospitals.',
+                'Research Scientist (Pharma)': 'Conduct drug discovery and development research. Design clinical trials and analyze results.',
+                'Quality Control Analyst': 'Test pharmaceutical products for quality, purity, and potency following strict regulatory standards.',
+                'Ayurvedic Doctor': 'Practice traditional Ayurvedic medicine. Diagnose conditions and prescribe herbal treatments and therapies.',
+                'Panchakarma Specialist': 'Administer traditional Ayurvedic detoxification and rejuvenation therapies.',
+                'Ayurvedic Researcher': 'Research Ayurvedic formulations and validate traditional remedies using modern scientific methods.',
+                'Wellness Consultant': 'Advise clients on holistic health practices combining traditional and modern wellness approaches.',
+                'Ayurvedic Product Manager': 'Develop and manage Ayurvedic healthcare and wellness products for commercial markets.',
+                'Staff Nurse': 'Provide direct patient care in hospitals. Administer medications and monitor patient health.',
+                'ICU Nurse': 'Provide critical care to patients in intensive care units. Manage life-support equipment and emergency situations.',
+                'Nursing Supervisor': 'Lead and manage nursing teams. Ensure quality patient care standards across hospital departments.',
+                'Community Health Nurse': 'Deliver healthcare services in communities. Focus on preventive care and health education.',
+                'Nurse Educator': 'Train and mentor nursing students. Develop nursing curriculum and clinical training programs.',
+                'Homeopathic Doctor': 'Practice homeopathic medicine. Prescribe individualized remedies based on holistic patient assessment.',
+                'Homeopathy Researcher': 'Research homeopathic remedies and their clinical efficacy through trials and studies.',
+                'Homeopathic Hospital Consultant': 'Provide specialized homeopathic consultation in hospital settings alongside conventional medicine.',
+                'Wellness Centre Director': 'Manage and direct a wellness or alternative medicine clinic. Oversee staff and patient care.',
+                'Army Officer': 'Lead and command Army units. Plan and execute military operations for national defence.',
+                'Navy Officer': 'Serve as a commissioned officer in the Indian Navy. Manage naval operations and ship systems.',
+                'Air Force Pilot': 'Fly military aircraft for combat, transport, or reconnaissance missions. One of the most prestigious roles.',
+                'Military Intelligence Officer': 'Gather and analyze intelligence for military operations. Support strategic decision-making.',
+                'Defence Attaché': 'Represent the Indian Armed Forces in foreign countries. Serve as a military diplomat.',
+                'Infantry Officer': 'Lead infantry soldiers in ground combat operations. Command frontline units.',
+                'Naval Operations Officer': 'Plan and coordinate naval operations including fleet movements and maritime security.',
+                'Air Defence Officer': 'Manage air defence systems and operations. Protect airspace from aerial threats.',
+                'Signals Officer': 'Manage military communication systems and electronic warfare equipment.',
+                'Logistics Officer': 'Manage supply chains and logistics for military operations. Ensure troops are properly equipped.',
+                'Defence Systems Engineer': 'Design and develop advanced defence systems including weapons, radars, and surveillance equipment.',
+                'Missile Technology Specialist': 'Work on missile design, development, and testing at organizations like DRDO.',
+                'Cybersecurity Defence Analyst': 'Protect military networks and systems from cyber threats. Develop cyber warfare capabilities.',
+                'Radar & Communication Engineer': 'Design and maintain radar and communication systems for military applications.',
+                'Defence Research Scientist': 'Conduct cutting-edge research in defence technologies at labs like DRDO.',
+                'Commissioned Army Officer': 'Serve as a directly commissioned officer in the Indian Army with command responsibilities.',
+                'Special Forces Officer': 'Lead elite special operations forces (Para SF, Commandos) in high-risk missions.',
+                'Artillery Officer': 'Command artillery units and manage large-caliber weapons systems in combat operations.',
+                'Armoured Corps Officer': 'Command armoured vehicles and tank regiments. Lead mechanized warfare operations.',
+                'Fighter Pilot': 'Fly advanced combat fighter aircraft. Engage in air-to-air and air-to-ground operations.',
+                'Transport Pilot': 'Fly military transport aircraft for troop movement, cargo delivery, and humanitarian missions.',
+                'Helicopter Pilot': 'Fly military helicopters for combat support, transport, and rescue operations.',
+                'Aeronautical Engineer (IAF)': 'Maintain and service Indian Air Force aircraft. Ensure flight safety and readiness.',
+                'Air Traffic Controller (IAF)': 'Control military airspace and manage aircraft movements at IAF bases.',
+                'Software Engineer': 'Design, develop, and maintain software applications. Create user-friendly programs.',
+                'Data Scientist': 'Analyze complex data to help organizations make decisions. Use ML to extract insights.',
+                'DevOps Engineer': 'Bridge development and operations. Manage infrastructure and CI/CD.',
+                'Solutions Architect': 'Design comprehensive solutions for enterprise clients.',
+                'Cloud Engineer': 'Build and manage cloud infrastructure on AWS, Azure, or GCP.',
+                'Security Engineer': 'Protect systems from cyber threats. Implement security measures.',
+                'IT Consultant': 'Advise organizations on IT strategy and improve efficiency through technology.',
+                'Database Administrator': 'Manage databases. Ensure data integrity, security, and performance.',
+                'Network Engineer': 'Design and maintain computer networks.',
+                'IT Project Manager': 'Lead IT projects. Manage budgets, timelines, and resources.',
+                'Business Analyst': 'Analyze business processes and bridge business and IT departments.',
+                'System Administrator': 'Manage computer systems and networks.',
+                'Junior Developer': 'Support senior developers. Learn and grow programming skills.',
+                'Quality Assurance': 'Test software for bugs and ensure quality.',
+                'Frontend Developer': 'Create visual and interactive parts of websites.',
+                'Backend Developer': 'Build server-side logic and databases.',
+                'Mobile App Developer': 'Develop apps for iOS and Android devices.',
+                'Accountant': 'Maintain financial records and prepare tax documents.',
+                'Auditor': 'Examine financial records for accuracy and compliance.',
+                'Corporate Controller': 'Oversee all accounting operations.',
+                'Tax Specialist': 'Help minimize tax liability and ensure compliance.',
+                'Banking Professional': 'Work in banks managing accounts and providing financial services.',
+                'Investment Analyst': 'Research and analyze investments.',
+                'Chartered Accountant': 'Provide professional accounting and auditing services.',
+                'Tax Consultant': 'Advise on tax planning strategies.',
+                'Internal Auditor': 'Monitor internal controls and compliance.',
+                'Financial Advisor': 'Help manage wealth and create financial plans.',
+                'CFO (Chief Financial Officer)': 'Lead financial strategy for organizations.',
+                'Data Analyst': 'Transform data into actionable insights.',
+                'Machine Learning Engineer': 'Build AI and ML systems.',
+                'Data Engineer': 'Build and maintain data infrastructure.',
+                'Analytics Manager': 'Lead analytics teams.',
+                'AI Research Scientist': 'Research cutting-edge AI technologies.',
+                'Business Intelligence Developer': 'Create BI tools and dashboards.',
+                'Physicist': 'Conduct physics research.',
+                'Scientific Researcher': 'Lead scientific research projects.',
+                'Quality Engineer': 'Ensure product quality in manufacturing.',
+                'Physics Teacher': 'Teach physics at educational institutions.',
+                'Instrument Specialist': 'Design and maintain scientific instruments.',
+                'Optical Engineer': 'Work on optical systems and photonics.',
+                'Content Writer': 'Create written content for publications.',
+                'Teacher': 'Educate students in colleges.',
+                'Copywriter': 'Write persuasive marketing content.',
+                'Editor': 'Review and improve written content.',
+                'Librarian': 'Organize and manage library resources.',
+                'Public Relations Officer': 'Manage organizations\' public image.',
+                'Clinical Psychologist': 'Help individuals with mental health issues.',
+                'HR Specialist': 'Manage HR functions.',
+                'Organizational Psychologist': 'Improve workplace culture.',
+                'Child Psychologist': 'Work with children on developmental issues.',
+                'Industrial Psychologist': 'Apply psychology in workplace settings.',
+                'Research Psychologist': 'Conduct psychological research.',
+                'Operations Manager': 'Oversee daily operations.',
+                'Marketing Manager': 'Develop marketing strategies.',
+                'HR Manager': 'Lead HR department.',
+                'Project Manager': 'Lead projects to completion.',
+                'Supply Chain Manager': 'Manage logistics and supply chain.',
+                'Junior IT Support': 'Provide technical support.',
+                'Web Developer': 'Create and maintain websites.',
+                'System Support Specialist': 'Provide system technical support.',
+                'Data Entry Specialist': 'Input and manage data.',
+                'Mechanical Technician': 'Support mechanical operations.',
+                'Plant Operator': 'Operate industrial equipment.',
+                'AutoCAD Draftsman': 'Create technical drawings.',
+                'Quality Inspector': 'Inspect products for quality.',
+                'Maintenance Technician': 'Maintain and repair equipment.',
+                'Accounting Assistant': 'Support accounting department.',
+                'Tally Operator': 'Operate accounting software.',
+                'Bookkeeper': 'Record financial transactions.',
+                'Administrative Executive': 'Provide administrative support.',
+                'Accounts Executive': 'Manage accounts.',
+                'Sales Executive': 'Sell products and build relationships.',
+                'Operations Coordinator': 'Coordinate operational activities.',
+                'HR Coordinator': 'Support HR department.',
+                'Front Office Executive': 'Manage front desk.',
+                'Housekeeping Supervisor': 'Oversee housekeeping operations.',
+                'Food & Beverage Server': 'Serve customers in restaurants.',
+                'Event Coordinator': 'Plan and execute events.',
+                'Hotel Receptionist': 'Check guests in and out.',
+                'Social Media Manager': 'Manage social media.',
+                'SEO Specialist': 'Optimize websites for search engines.',
+                'Digital Marketing Executive': 'Execute digital marketing campaigns.',
+                'Email Marketing Specialist': 'Manage email campaigns.',
+                'Analytics Specialist': 'Analyze marketing data.',
+                'Graphic Designer': 'Create visual designs.',
+                'UI/UX Designer': 'Design user interfaces.',
+                'Web Designer': 'Design websites.',
+                'Brand Designer': 'Develop brand identity.',
+                'Motion Graphics Designer': 'Create animated graphics.',
+                'Full Stack Developer': 'Develop both frontend and backend.',
+                'WordPress Developer': 'Develop WordPress sites.',
+                'E-commerce Developer': 'Build online shopping platforms.',
+                'Web Support Technician': 'Provide web application support.',
+                'Junior Accountant': 'Support finance operations and accounting.',
+            };
+
+            let careerHTML = '';
+
+            const careerSkills = {
+                'Software Engineer': { skills: ['JavaScript', 'Python', 'System Design', 'Git', 'Agile'], growth: 'Junior Dev → Mid-Level → Senior → Tech Lead → CTO' },
+                'Data Scientist': { skills: ['Python', 'ML', 'SQL', 'Statistics', 'Data Viz'], growth: 'Analyst → Data Scientist → Senior DS → Lead → CDO' },
+                'DevOps Engineer': { skills: ['Docker', 'Kubernetes', 'AWS', 'CI/CD', 'Linux'], growth: 'DevOps → Senior → SRE → Cloud Architect' },
+                'Cybersecurity Analyst': { skills: ['Network Security', 'Ethical Hacking', 'SIEM', 'Cryptography'], growth: 'SOC Analyst → Security Engineer → CISO' },
+                'AI/ML Engineer': { skills: ['TensorFlow', 'PyTorch', 'Deep Learning', 'NLP', 'MLOps'], growth: 'ML Engineer → Senior ML → AI Architect → Head of AI' },
+                'Solutions Architect': { skills: ['Cloud Platforms', 'System Design', 'Networking', 'Security'], growth: 'Engineer → Architect → Principal → VP Engineering' },
+                'Doctor': { skills: ['Clinical Diagnosis', 'Patient Care', 'Medical Procedures', 'Anatomy'], growth: 'Intern → Resident → Specialist → Consultant → HOD' },
+                'Surgeon': { skills: ['Surgical Techniques', 'Anatomy', 'Emergency Care', 'Precision'], growth: 'Resident → Fellow → Surgeon → Chief Surgeon' },
+                'Dentist': { skills: ['Oral Surgery', 'Prosthodontics', 'Orthodontics', 'Patient Care'], growth: 'Intern → Dentist → Specialist → Private Practice' },
+                'Pharmacist': { skills: ['Pharmacology', 'Drug Interactions', 'Compounding', 'Counselling'], growth: 'Pharmacist → Clinical → Manager → Director' },
+                'Nurse': { skills: ['Patient Care', 'Clinical Procedures', 'First Aid', 'Documentation'], growth: 'Staff Nurse → Senior → Head Nurse → Nursing Director' },
+                'Chartered Accountant': { skills: ['Accounting', 'Tax Law', 'Auditing', 'Financial Analysis'], growth: 'Trainee → CA → Senior CA → Partner → CFO' },
+                'Financial Analyst': { skills: ['Financial Modelling', 'Excel', 'Valuation', 'Reporting'], growth: 'Analyst → Senior → Manager → VP Finance → CFO' },
+                'Marketing Manager': { skills: ['Strategy', 'Analytics', 'Branding', 'Digital Marketing'], growth: 'Executive → Manager → Senior → Director → CMO' },
+                'Lawyer': { skills: ['Legal Research', 'Argumentation', 'Drafting', 'Negotiation'], growth: 'Associate → Senior → Partner → Senior Partner' },
+                'Journalist': { skills: ['Writing', 'Research', 'Interviewing', 'Media Ethics'], growth: 'Reporter → Senior Reporter → Editor → Editor-in-Chief' },
+                'Psychologist': { skills: ['Counselling', 'CBT', 'Psychometrics', 'Research'], growth: 'Counsellor → Clinical → Senior → Private Practice' },
+                'UI/UX Designer': { skills: ['Figma', 'User Research', 'Wireframing', 'Prototyping'], growth: 'Junior → UX Designer → Senior → Design Lead → VP Design' },
+                'Hotel Manager': { skills: ['Hospitality', 'Customer Service', 'Leadership', 'Budgeting'], growth: 'Front Desk → Asst. Manager → GM → VP Operations' },
+                'Civil Engineer': { skills: ['AutoCAD', 'Structural Analysis', 'Project Mgmt', 'Surveying'], growth: 'Site Engr → Project Engr → Project Mgr → Chief Engr' },
+                'Mechanical Engineer': { skills: ['SolidWorks', 'Thermodynamics', 'Manufacturing', 'FEA'], growth: 'Junior → Design Engr → Project Mgr → Director' },
+                'Electrical Engineer': { skills: ['Circuit Design', 'Power Systems', 'PLC', 'Control Theory'], growth: 'Junior → Electrical Engr → Lead → Engineering Manager' },
+            };
+
+            if (course.careers && course.careers.length > 0) {
+                careerHTML = course.careers.map(c => {
+                    const desc = careerDescriptions[c.career_name] || 'A rewarding career path with strong growth opportunities in this field.';
+                    const info = careerSkills[c.career_name] || { skills: ['Analytical Thinking', 'Communication', 'Problem Solving', 'Teamwork'], growth: 'Entry Level → Mid Level → Senior → Lead → Director' };
+                    return `
+                        <div class="career-card">
+                            <div class="career-name">${c.career_name}</div>
+                            <div class="career-role">${c.job_role}</div>
+                            <p class="career-desc">${desc}</p>
+                            <div style="margin-bottom:10px;">
+                                <div style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px;">Key Skills</div>
+                                <div style="display:flex;flex-wrap:wrap;gap:5px;">${info.skills.map(s => `<span style="font-size:11px;background:rgba(67,56,202,0.06);color:var(--accent-primary);border:1px solid rgba(67,56,202,0.12);padding:3px 8px;border-radius:6px;">${s}</span>`).join('')}</div>
+                            </div>
+                            <div>
+                                <div style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:4px;">Career Growth</div>
+                                <div style="font-size:12px;color:var(--text-secondary);line-height:1.5;">${info.growth}</div>
+                            </div>
+                        </div>`;
+                }).join('');
+            } else {
+                careerHTML = '<div class="no-data">No career information available</div>';
+            }
+
+            document.getElementById('courseDetailsContainer').innerHTML = `
+                <div class="section-card">
+                    <div class="course-title">${course.name}</div>
+                    <div class="meta-grid">
+                        <div class="meta-item"><div class="meta-label">Stream</div><div class="meta-value">${course.stream}</div></div>
+                        <div class="meta-item"><div class="meta-label">Career Paths</div><div class="meta-value">${course.careers ? course.careers.length : 0} options</div></div>
+                        ${course.duration_months ? `<div class="meta-item"><div class="meta-label">Duration</div><div class="meta-value">${course.duration_months} months</div></div>` : ''}
+                    </div>
+                </div>
+
+                <div class="section-card">
+                    <div class="section-title">Course Highlights</div>
+                    <div class="meta-grid">
+                        <div class="meta-item"><div class="meta-label">Eligibility</div><div class="meta-value">Min ${course.min_percentage || 33}% in ${course.stream}</div></div>
+                        ${course.duration_months ? `<div class="meta-item"><div class="meta-label">Duration</div><div class="meta-value">${Math.floor(course.duration_months/12)} year${Math.floor(course.duration_months/12)>1?'s':''} (${course.duration_months} months)</div></div>` : ''}
+                        <div class="meta-item"><div class="meta-label">Degree Type</div><div class="meta-value">${course.name.split(' ')[0]}</div></div>
+                        <div class="meta-item"><div class="meta-label">Career Options</div><div class="meta-value">${course.careers ? course.careers.length : 0} paths available</div></div>
+                    </div>
+                </div>
+
+                <div class="section-card">
+                    <div class="section-title">About This Course</div>
+                    <p class="desc-text">${course.description}</p>
+                    <p class="desc-text" style="margin-top:13px;"><strong>Why this course?</strong><br>This ${course.stream} stream program gives you practical skills and opens up different career options after graduation.</p>
+                </div>
+
+                <div class="section-card">
+                    <div class="section-title">Key Skills You'll Learn</div>
+                    <div class="skills-grid">
+                        ${getSkillsByStream(course.stream).map(s => `<div class="skill-tag">${s}</div>`).join('')}
+                    </div>
+                </div>
+
+                <div class="section-card">
+                    <div class="section-title">Learning Resources</div>
+                    <ul class="resource-list">
+                        <li><strong>Video Tutorials</strong> - Official course YouTube channels and tutorials</li>
+                        <li><strong>Textbooks</strong> - Standard industry textbooks and references</li>
+                        <li><strong>Hands-On Practice</strong> - Projects and practical assignments</li>
+                        <li><strong>Community</strong> - Study groups, forums and peer collaboration</li>
+                        <li><strong>Certifications</strong> - Industry-recognized certifications</li>
+                        <li><strong>Mentorship</strong> - Guidance from experienced professionals</li>
+                    </ul>
+                </div>
+
+                <div class="section-card">
+                    <div class="section-title">All Career Opportunities (${course.careers ? course.careers.length : 0})</div>
+                    <p style="color:var(--text-muted);margin-bottom:18px;font-size:14px;line-height:1.55;">Career paths you can pursue after completing this course.</p>
+                    <div class="career-grid">${careerHTML}</div>
+                </div>
+
+                <div class="section-card">
+                    <div class="section-title">Quick Facts</div>
+                    <div class="facts-grid">
+                        <div class="fact-box"><div class="fact-value">${course.stream}</div><div class="fact-label">Stream</div></div>
+                        <div class="fact-box"><div class="fact-value">${course.careers ? course.careers.length : 0}</div><div class="fact-label">Career Paths</div></div>
+                        ${course.duration_months ? `<div class="fact-box"><div class="fact-value">${course.duration_months}mo</div><div class="fact-label">Duration</div></div>` : ''}
+                    </div>
+                </div>
+
+                <div class="section-card" id="ratingSection">
+                    <div class="section-title">Rate and Review</div>
+                    <div style="margin-bottom:16px;">
+                        <div id="starRating" style="display:flex;gap:8px;margin-bottom:12px;">
+                            ${[1,2,3,4,5].map(s => '<span class="star" data-star="'+s+'" onclick="setRating('+s+')" style="font-size:28px;cursor:pointer;opacity:0.35;transition:all 0.2s;">&#9733;</span>').join('')}
+                        </div>
+                        <textarea id="reviewText" rows="3" placeholder="Write a review (optional)..." style="width:100%;background:#fff;border:1px solid var(--border);border-radius:9px;padding:11px;color:var(--text-primary);font-family:Inter,sans-serif;font-size:14px;resize:vertical;"></textarea>
+                        <button onclick="submitRating(${courseId})" style="margin-top:9px;background:var(--accent-gradient);border:none;color:#fff;padding:9px 22px;border-radius:9px;cursor:pointer;font-weight:600;font-size:14px;">Submit</button>
+                    </div>
+                    <div id="avgRating" style="margin-bottom:16px;padding:12px 16px;background:var(--bg-subtle);border:1px solid var(--border);border-radius:10px;"></div>
+                    <div id="reviewsList"></div>
+                </div>
+
+                <div class="section-card" style="display:flex;gap:12px;flex-wrap:wrap;">
+                    <button onclick="bookmarkCourse(${courseId})" id="bookmarkBtn" style="flex:1;min-width:180px;background:rgba(67,56,202,0.06);border:1px solid rgba(67,56,202,0.15);color:var(--accent-primary);padding:12px 20px;border-radius:10px;cursor:pointer;font-size:14px;font-weight:600;transition:all 0.2s;">Save to Bookmarks</button>
+                    <select onchange="updateProgress(${courseId}, this.value)" id="progressSelect" style="flex:1;min-width:180px;background:#fff;border:1px solid var(--border);color:var(--text-primary);padding:12px 16px;border-radius:10px;font-size:14px;cursor:pointer;">
+                        <option value="not_started">Not Started</option>
+                        <option value="in_progress">In Progress</option>
+                        <option value="completed">Completed</option>
+                    </select>
+                </div>`;
+        }
+
+        function getSkillsByStream(stream) {
+            const map = {
+                'Science': ['Problem Solving', 'Programming', 'Data Analysis', 'Research Methods', 'Critical Thinking'],
+                'Commerce': ['Financial Analysis', 'Business Management', 'Accounting', 'Economics', 'Communication'],
+                'Humanities': ['Critical Thinking', 'Communication', 'Research', 'Writing', 'Cultural Awareness'],
+                'Medical': ['Clinical Diagnosis', 'Patient Care', 'Anatomy & Physiology', 'Pharmacology', 'Medical Ethics', 'Emergency Medicine'],
+                'Defence': ['Leadership', 'Strategic Planning', 'Physical Fitness', 'Weapons Systems', 'Military Tactics', 'Team Command']
+            };
+            return map[stream] || ['Problem Solving', 'Analysis', 'Communication'];
+        }
+
+        function getYouTubeLink(name) {
+            return 'https://www.youtube.com/results?search_query=' + encodeURIComponent(name + ' course details career scope India');
+        }
+
+        function goBack() { window.history.back(); }
+
+        // rating stuff
+        let selectedStars = 0;
+        const userId = localStorage.getItem('userId') || sessionStorage.getItem('userId');
+
+        function setRating(n) {
+            selectedStars = n;
+            document.querySelectorAll('#starRating .star').forEach(s => {
+                s.style.opacity = parseInt(s.dataset.star) <= n ? '1' : '0.3';
+                s.style.transform = parseInt(s.dataset.star) <= n ? 'scale(1.15)' : 'scale(1)';
+            });
+        }
+
+        async function submitRating(courseId) {
+            if (!userId) { alert('Please log in first'); return; }
+            if (!selectedStars) { alert('Please select a star rating'); return; }
+            const review = document.getElementById('reviewText')?.value || '';
+            const res = await fetch('/api/ratings', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ userId, courseId, stars: selectedStars, review }) });
+            const data = await res.json();
+            if (data.success) { loadRatings(courseId); }
+        }
+
+        async function loadRatings(courseId) {
+            const res = await fetch(`/api/ratings/${courseId}`).then(r => r.json());
+            if (res.success) {
+                const avg = document.getElementById('avgRating');
+                if (avg) avg.innerHTML = `<strong style="font-size:19px;color:#f59e0b;">${'&#9733;'.repeat(Math.round(res.averageStars))}</strong> <span style="color:#6b7280;">${res.averageStars} / 5 (${res.totalRatings} ratings)</span>`;
+                const list = document.getElementById('reviewsList');
+                if (list) list.innerHTML = res.ratings.filter(r => r.review).slice(0, 5).map(r => `
+                    <div style="padding:11px;border-top:1px solid var(--border);font-size:13px;">
+                        <span style="color:#f59e0b;">${'&#9733;'.repeat(r.stars)}</span>
+                        <span style="color:#6b7280;margin-left:7px;">${r.user_name || r.email.split('@')[0]}</span>
+                        <p style="color:var(--text-muted);margin-top:4px;">${r.review}</p>
+                    </div>`).join('');
+            }
+        }
+
+        async function bookmarkCourse(courseId) {
+            if (!userId) { alert('Please log in first'); return; }
+            const res = await fetch('/api/bookmarks', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ userId, courseId }) });
+            const data = await res.json();
+            const btn = document.getElementById('bookmarkBtn');
+            if (data.success && btn) { btn.textContent = 'Saved!'; btn.style.background = 'rgba(5,150,105,0.08)'; btn.style.color = '#059669'; btn.style.borderColor = 'rgba(5,150,105,0.2)'; }
+        }
+
+        async function updateProgress(courseId, status) {
+            if (!userId) return;
+            await fetch('/api/progress', { method: 'PUT', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ userId, courseId, status }) });
+        }
+
+        // load ratings and progress if user is logged in
+        if (courseId && userId) {
+            setTimeout(() => {
+                loadRatings(courseId);
+                // Load existing progress
+                fetch(`/api/progress/${userId}`).then(r => r.json()).then(data => {
+                    if (data.success) {
+                        const p = data.progress.find(x => x.course_id == courseId);
+                        if (p) { const sel = document.getElementById('progressSelect'); if (sel) sel.value = p.status; }
+                    }
+                });
+            }, 500);
+        }
+    </script>
+    <script src="nav.js"></script>
+</body>
+</html>

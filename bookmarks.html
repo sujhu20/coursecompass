@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Saved Courses | Career Course Compass</title>
+    <meta name="description" content="Manage your bookmarked courses and track learning progress.">
+    <link rel="stylesheet" href="design-system.css">
+    <style>
+        .container { max-width: 1000px; margin: 0 auto; padding: 32px 24px; }
+
+        .page-header { margin-bottom: 24px; }
+        .page-header h1 { font-size: 24px; margin-bottom: 4px; }
+        .page-header p { color: var(--text-muted); font-size: 14px; }
+
+        .filter-bar { display: flex; gap: 6px; margin-bottom: 24px; flex-wrap: wrap; }
+        .filter-btn {
+            padding: 6px 14px;
+            font-size: 13px;
+            font-weight: 500;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            background: #fff;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-family: var(--font-sans);
+            transition: all 0.15s;
+        }
+        .filter-btn:hover { background: var(--bg-subtle); color: var(--text-secondary); }
+        .filter-btn.active { background: var(--primary-light); color: var(--primary); border-color: var(--primary-border); font-weight: 600; }
+
+        .count { font-family: var(--font-mono); font-size: 12px; margin-left: 4px; }
+
+        .course-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px; }
+
+        .course-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 20px;
+            transition: box-shadow 0.2s, border-color 0.2s;
+        }
+        .course-card:hover { border-color: var(--border-hover); box-shadow: var(--shadow-md); }
+
+        .card-header { display: flex; justify-content: space-between; align-items: start; gap: 10px; margin-bottom: 8px; }
+        .card-header h3 { font-size: 15px; font-weight: 600; color: var(--text-primary); line-height: 1.35; flex: 1; }
+        .card-desc { font-size: 13px; color: var(--text-muted); line-height: 1.55; margin-bottom: 12px; }
+
+        .status-row {
+            display: flex; align-items: center; gap: 6px;
+            font-size: 12px; color: var(--text-light); margin-bottom: 14px;
+            font-family: var(--font-mono);
+        }
+        .dot { width: 7px; height: 7px; border-radius: 50%; }
+        .dot-not_started { background: var(--text-light); }
+        .dot-in_progress { background: var(--warning); }
+        .dot-completed   { background: var(--success); }
+
+        .card-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+        .card-actions .btn {
+            padding: 6px 12px;
+            font-size: 12px;
+            font-weight: 500;
+            border-radius: 6px;
+            border: 1px solid;
+            cursor: pointer;
+            font-family: var(--font-sans);
+            transition: all 0.15s;
+        }
+        .btn-update { background: #fff; border-color: var(--border); color: var(--text-secondary); }
+        .btn-view   { background: var(--primary-light); border-color: var(--primary-border); color: var(--primary); }
+        .btn-remove { background: var(--danger-light); border-color: rgba(220,38,38,0.15); color: var(--danger); }
+        .btn-remove:hover { background: rgba(220,38,38,0.1); }
+
+        .progress-select {
+            padding: 6px 8px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-size: 12px;
+            font-family: var(--font-sans);
+            color: var(--text-secondary);
+            background: #fff;
+            cursor: pointer;
+        }
+
+        .empty-state { text-align: center; padding: 60px 20px; color: var(--text-light); grid-column: 1/-1; }
+        .empty-state .icon { font-size: 40px; margin-bottom: 10px; }
+        .empty-state a { color: var(--primary); text-decoration: none; font-weight: 500; }
+
+        @media (max-width: 768px) { .course-grid { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+    <div id="navbar-container"></div>
+
+    <div class="container">
+        <div class="page-header">
+            <h1>Saved Courses</h1>
+            <p>Manage your bookmarked courses and track progress</p>
+        </div>
+
+        <div class="filter-bar">
+            <button class="filter-btn active" data-f="all" onclick="filter('all',this)">All <span class="count" id="countAll">0</span></button>
+            <button class="filter-btn" data-f="PCM" onclick="filter('PCM',this)">PCM</button>
+            <button class="filter-btn" data-f="PCB" onclick="filter('PCB',this)">PCB</button>
+            <button class="filter-btn" data-f="Commerce" onclick="filter('Commerce',this)">Commerce</button>
+            <button class="filter-btn" data-f="Humanities" onclick="filter('Humanities',this)">Humanities</button>
+        </div>
+
+        <div class="course-grid" id="grid"></div>
+    </div>
+
+    <script>
+        const userId = localStorage.getItem('userId') || sessionStorage.getItem('userId');
+        if (!userId) window.location.href = 'login.html';
+
+        function esc(s) { if (!s) return ''; return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+        let all = [], progMap = {};
+
+        async function load() {
+            try {
+                const [bm, pr] = await Promise.all([
+                    fetch('/api/bookmarks/' + userId, { credentials:'include' }).then(r => r.json()),
+                    fetch('/api/progress/' + userId, { credentials:'include' }).then(r => r.json())
+                ]);
+                if (pr.success) pr.progress.forEach(p => { progMap[p.course_id] = p.status; });
+                if (bm.success) { all = bm.bookmarks; document.getElementById('countAll').textContent = all.length; render(all); }
+            } catch(e) { console.error(e); }
+        }
+
+        function render(list) {
+            if (!list.length) {
+                document.getElementById('grid').innerHTML = '<div class="empty-state"><div class="icon">🔖</div><p>No saved courses yet. <a href="recommendation.html">Get recommendations</a> and save courses you like.</p></div>';
+                return;
+            }
+            document.getElementById('grid').innerHTML = list.map(b => {
+                const st = progMap[b.course_id] || 'not_started';
+                const labels = { not_started:'Not Started', in_progress:'In Progress', completed:'Completed' };
+                return `<div class="course-card">
+                    <div class="card-header">
+                        <h3>${esc(b.name)}</h3>
+                        <span class="stream-badge ${b.stream || 'All'}">${esc(b.stream || 'All')}</span>
+                    </div>
+                    <div class="card-desc">${esc(b.description) || 'No description'}</div>
+                    <div class="status-row"><span class="dot dot-${st}"></span>${labels[st]}${b.duration_months ? ' · ' + b.duration_months + ' mo' : ''}</div>
+                    <div class="card-actions">
+                        <select class="progress-select" onchange="updateProg(${b.course_id},this.value)">
+                            <option value="not_started" ${st==='not_started'?'selected':''}>Not Started</option>
+                            <option value="in_progress" ${st==='in_progress'?'selected':''}>In Progress</option>
+                            <option value="completed" ${st==='completed'?'selected':''}>Completed</option>
+                        </select>
+                        <button class="btn btn-view" onclick="location.href='course-details.html?id=${b.course_id}'">Details</button>
+                        <button class="btn btn-remove" onclick="removeBm(${b.course_id})">Remove</button>
+                    </div>
+                </div>`;
+            }).join('');
+        }
+
+        function filter(stream, btn) {
+            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            render(stream === 'all' ? all : all.filter(b => b.stream === stream));
+        }
+
+        async function updateProg(cid, status) {
+            try { await fetch('/api/progress', { method:'PUT', headers:{'Content-Type':'application/json'}, credentials:'include', body: JSON.stringify({ userId, courseId: cid, status }) }); progMap[cid] = status; } catch(e) { console.error(e); }
+        }
+
+        async function removeBm(cid) {
+            try {
+                await fetch('/api/bookmarks', { method:'DELETE', headers:{'Content-Type':'application/json'}, credentials:'include', body: JSON.stringify({ userId, courseId: cid }) });
+                all = all.filter(b => b.course_id !== cid);
+                document.getElementById('countAll').textContent = all.length;
+                render(all);
+            } catch(e) { console.error(e); }
+        }
+
+        async function logout() { try { await fetch('/logout'); } catch(e){} localStorage.clear(); sessionStorage.clear(); window.location.href = 'login.html'; }
+
+        load();
+    </script>
+    <script src="nav.js"></script>
+</body>
+</html>

@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Compare Courses | Career Course Compass</title>
+    <meta name="description" content="Compare course branches side by side — careers and duration.">
+    <link rel="stylesheet" href="design-system.css">
+    <style>
+        .container { max-width: 1100px; margin: 0 auto; padding: 32px 24px; }
+
+        .page-header { margin-bottom: 24px; }
+        .page-header h1 { font-size: 24px; margin-bottom: 4px; }
+        .page-header p { color: var(--text-muted); font-size: 14px; }
+
+        .selector-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 24px;
+            margin-bottom: 28px;
+            box-shadow: var(--shadow-sm);
+        }
+        .selector-row { display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-end; }
+        .selector-group { flex: 1; min-width: 200px; }
+        .selector-group label {
+            display: block;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            margin-bottom: 6px;
+        }
+        .selector-group select {
+            width: 100%;
+            padding: 9px 12px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            font-size: 14px;
+            font-family: var(--font-sans);
+            color: var(--text-primary);
+            background: #fff;
+            outline: none;
+            transition: border-color 0.15s;
+        }
+        .selector-group select:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(67,56,202,0.08); }
+
+        .compare-btn {
+            background: var(--primary);
+            border: none;
+            color: #fff;
+            padding: 9px 24px;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            font-family: var(--font-sans);
+            transition: background 0.15s;
+            white-space: nowrap;
+        }
+        .compare-btn:hover { background: var(--primary-hover); }
+        .compare-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        /* Table */
+        #compareResult { overflow-x: auto; }
+
+        .compare-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: var(--bg-card);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow-sm);
+        }
+        .compare-table th {
+            padding: 14px 16px;
+            text-align: left;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            background: var(--bg-subtle);
+            border-bottom: 1px solid var(--border);
+            min-width: 120px;
+        }
+        .compare-table th:first-child { color: var(--primary); width: 130px; }
+        .compare-table thead th.branch-name {
+            font-weight: 700;
+            color: var(--text-primary);
+            font-size: 14px;
+            text-transform: none;
+            letter-spacing: -0.01em;
+        }
+        .compare-table td {
+            padding: 12px 16px;
+            font-size: 13px;
+            color: var(--text-secondary);
+            border-bottom: 1px solid var(--border);
+            vertical-align: top;
+        }
+        .compare-table tr:hover td { background: var(--bg-subtle); }
+        .compare-table .row-label {
+            font-weight: 600;
+            color: var(--primary);
+            font-size: 12px;
+        }
+
+        .pill {
+            display: inline-block;
+            font-size: 11px;
+            background: var(--bg-subtle);
+            border: 1px solid var(--border);
+            padding: 2px 8px;
+            border-radius: 6px;
+            margin: 2px 3px 2px 0;
+            color: var(--text-muted);
+        }
+
+        .winner-cell {
+            background: var(--success-light) !important;
+            border-left: 3px solid var(--success);
+        }
+
+        .empty-state { text-align: center; padding: 60px; color: var(--text-light); }
+        .empty-state .icon { font-size: 40px; margin-bottom: 10px; }
+        .msg-err { padding:12px 16px; background:#fef2f2; border:1px solid #fecaca; color:#dc2626; border-radius: var(--radius-sm); font-size:13px; margin-bottom:16px; }
+
+        @media (max-width: 768px) {
+            .selector-row { flex-direction: column; }
+            .compare-table { min-width: 600px; }
+        }
+    </style>
+</head>
+<body>
+    <div id="navbar-container"></div>
+
+    <div class="container">
+        <div class="page-header">
+            <h1>Compare Courses</h1>
+            <p>Side-by-side comparison of main course branches — careers and duration</p>
+        </div>
+
+        <div class="selector-card">
+            <div class="selector-row">
+                <div class="selector-group">
+                    <label for="course1">Branch 1</label>
+                    <select id="course1"><option value="">Select…</option></select>
+                </div>
+                <div class="selector-group">
+                    <label for="course2">Branch 2</label>
+                    <select id="course2"><option value="">Select…</option></select>
+                </div>
+                <div class="selector-group">
+                    <label for="course3">Branch 3 (optional)</label>
+                    <select id="course3"><option value="">None</option></select>
+                </div>
+                <button class="compare-btn" onclick="compareCourses()" id="compareBtn">Compare</button>
+            </div>
+        </div>
+
+        <div id="compareResult">
+            <div class="empty-state">
+                <div class="icon">⚖️</div>
+                <p>Select 2–3 branches above and click Compare</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        if (!(localStorage.getItem('userId')||sessionStorage.getItem('userId'))) window.location.href='login.html';
+
+        function esc(s) { if (!s) return ''; return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+        const branches = [
+            { key:'btech',    label:'B.Tech (Engineering)',       stream:'PCM',        prefix:'B.Tech' },
+            { key:'bca',      label:'BCA (Computer Applications)',stream:'PCM',        prefix:'BCA' },
+            { key:'bsc-cs',   label:'B.Sc (Computing & Physics)', stream:'PCM',        prefix:'B.Sc', match:['B.Sc Computer Science','B.Sc Data Science','B.Sc Physics'] },
+            { key:'barch',    label:'B.Arch (Architecture)',      stream:'PCM',        prefix:'B.Arch' },
+            { key:'mbbs',     label:'MBBS (Medicine)',            stream:'PCB',        prefix:'MBBS' },
+            { key:'bds',      label:'BDS (Dental Surgery)',       stream:'PCB',        prefix:'BDS' },
+            { key:'bsc-life', label:'B.Sc (Life Sciences)',       stream:'PCB',        prefix:'B.Sc', match:['B.Sc Biotechnology','B.Sc Microbiology','B.Sc Genetics'] },
+            { key:'bpharm',   label:'B.Pharm (Pharmacy)',         stream:'PCB',        prefix:'B.Pharm' },
+            { key:'bsc-nurs', label:'B.Sc Nursing',              stream:'PCB',        prefix:'B.Sc Nursing' },
+            { key:'bcom',     label:'B.Com (Commerce)',           stream:'Commerce',   prefix:'B.Com' },
+            { key:'bba',      label:'BBA (Business)',             stream:'Commerce',   prefix:'BBA', exclude:['BBA LLB'] },
+            { key:'ca',       label:'Chartered Accountancy (CA)', stream:'Commerce',   prefix:'Chartered' },
+            { key:'ba',       label:'BA (Humanities)',            stream:'Humanities', prefix:'BA', exclude:['BA LLB'] },
+            { key:'bjmc',     label:'BJMC (Journalism)',          stream:'Humanities', prefix:'BJMC' },
+            { key:'llb',      label:'Integrated Law (LLB)',       stream:'Humanities', match:['BA LLB (Integrated Law)','BBA LLB (Integrated Law)'] },
+            { key:'bdes',     label:'B.Des (Design)',             stream:'All',        prefix:'B.Des' },
+            { key:'hotel',    label:'B.Sc Hotel Management',      stream:'All',        prefix:'B.Sc Hotel' },
+        ];
+
+        let branchIds = {};
+
+        fetch('/api/all-courses', { credentials:'include' }).then(r=>r.json()).then(data => {
+            if (!data.success) return;
+
+            branches.forEach(b => {
+                const matched = data.courses.filter(c => {
+                    if (b.match) return b.match.includes(c.name);
+                    const nm = c.name.startsWith(b.prefix);
+                    if (b.exclude) return nm && !b.exclude.some(ex => c.name.startsWith(ex));
+                    return nm;
+                });
+                branchIds[b.key] = matched.map(c => c.id);
+            });
+
+            const groups = {};
+            branches.forEach(b => {
+                if (!branchIds[b.key].length) return;
+                const g = b.stream === 'All' ? 'All Streams' : b.stream;
+                if (!groups[g]) groups[g] = [];
+                groups[g].push(b);
+            });
+
+            let opts = '';
+            for (const [g, items] of Object.entries(groups)) {
+                opts += `<optgroup label="${esc(g)}">`;
+                items.forEach(b => { opts += `<option value="${b.key}">${esc(b.label)} (${branchIds[b.key].length})</option>`; });
+                opts += '</optgroup>';
+            }
+
+            document.getElementById('course1').innerHTML = '<option value="">Select…</option>' + opts;
+            document.getElementById('course2').innerHTML = '<option value="">Select…</option>' + opts;
+            document.getElementById('course3').innerHTML = '<option value="">None</option>' + opts;
+        }).catch(() => {
+            document.getElementById('compareResult').innerHTML = '<div class="msg-err">Failed to load courses. Check if the server is running.</div>';
+        });
+
+        async function compareCourses() {
+            const keys = [
+                document.getElementById('course1').value,
+                document.getElementById('course2').value,
+                document.getElementById('course3').value
+            ].filter(Boolean);
+
+            if (keys.length < 2) { alert('Select at least 2 branches'); return; }
+            const unique = [...new Set(keys)];
+            if (unique.length < 2) { alert('Select 2 different branches'); return; }
+
+            const btn = document.getElementById('compareBtn');
+            btn.disabled = true; btn.textContent = 'Loading…';
+
+            try {
+                const allIds = [];
+                unique.forEach(k => { (branchIds[k] || []).forEach(id => { if (!allIds.includes(id)) allIds.push(id); }); });
+                if (allIds.length < 2) throw new Error('Not enough course data');
+
+                const res = await fetch('/api/compare?ids=' + allIds.join(','), { credentials:'include' });
+                if (!res.ok) throw new Error('Server error: ' + res.status);
+                const data = await res.json();
+                if (!data.success || !data.courses.length) throw new Error('No data returned');
+
+                const byId = {};
+                data.courses.forEach(c => { byId[c.id] = c; });
+
+                const bd = unique.map(key => {
+                    const branch = branches.find(b => b.key === key);
+                    const ids = branchIds[key] || [];
+                    const courses = ids.map(id => byId[id]).filter(Boolean);
+
+                    const seenC = new Set();
+                    const careers = [];
+                    courses.forEach(c => { (c.careers || []).forEach(cr => { if (!seenC.has(cr.career_name)) { seenC.add(cr.career_name); careers.push(cr); } }); });
+
+                    const durs = courses.map(c => c.duration_months).filter(Boolean);
+                    const durTxt = durs.length ? (Math.min(...durs) === Math.max(...durs) ? durs[0] + ' mo' : Math.min(...durs) + '–' + Math.max(...durs) + ' mo') : 'N/A';
+
+                    return { label: branch.label, stream: branch.stream, subs: courses.map(c => c.name), durTxt, careers, count: careers.length };
+                });
+
+                const counts = bd.map(b => b.count);
+                const maxC = Math.max(...counts);
+                const bestCar = maxC > 0 ? counts.indexOf(maxC) : -1;
+
+                const th = bd.map(b => `<th class="branch-name">${esc(b.label)}</th>`).join('');
+                const rows = [
+                    { l:'Stream', c: bd.map(b => `<td><span class="stream-badge ${b.stream}">${esc(b.stream)}</span></td>`) },
+                    { l:'Duration', c: bd.map(b => `<td style="font-family:var(--font-mono)">${b.durTxt}</td>`) },
+                    { l:'Includes', c: bd.map(b => `<td>${b.subs.map(n => '<span class="pill">' + esc(n) + '</span>').join('')}</td>`) },
+                    { l:'Career Count', c: bd.map((b,i) => `<td class="${i===bestCar?'winner-cell':''}" style="font-family:var(--font-mono);font-weight:700">${b.count}</td>`) },
+                    { l:'Career Paths', c: bd.map(b => `<td>${b.careers.slice(0,8).map(cr => '<span class="pill">' + esc(cr.career_name) + '</span>').join('')}${b.careers.length>8?'<span class="pill">+' + (b.careers.length-8) + '</span>':''}</td>`) },
+                ];
+
+                document.getElementById('compareResult').innerHTML = `
+                    <table class="compare-table">
+                        <thead><tr><th>Feature</th>${th}</tr></thead>
+                        <tbody>${rows.map(r => `<tr><td class="row-label">${r.l}</td>${r.c.join('')}</tr>`).join('')}</tbody>
+                    </table>`;
+            } catch (err) {
+                document.getElementById('compareResult').innerHTML = `<div class="msg-err">${esc(err.message)}</div>`;
+            } finally { btn.disabled = false; btn.textContent = 'Compare'; }
+        }
+
+        async function logout() {
+            try { await fetch('/logout'); } catch(e){}
+            localStorage.clear(); sessionStorage.clear(); window.location.href = 'login.html';
+        }
+    </script>
+    <script src="nav.js"></script>
+</body>
+</html>

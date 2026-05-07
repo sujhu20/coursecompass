@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Skill Gap Analyzer | Career Course Compass</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box;font-family:'Inter',-apple-system,sans-serif}
+        body{min-height:100vh;background:#0a0e1a;color:#f1f5f9}
+        body::before{content:'';position:fixed;width:500px;height:500px;background:rgba(236,72,153,0.08);border-radius:50%;filter:blur(100px);top:-150px;right:-100px;pointer-events:none}
+        .nav{position:sticky;top:0;z-index:100;background:rgba(10,14,26,0.85);backdrop-filter:blur(20px);border-bottom:1px solid rgba(255,255,255,0.06);padding:0 32px}
+        .nav-inner{max-width:1300px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;height:64px}
+        .nav-logo{font-size:18px;font-weight:700;background:linear-gradient(135deg,#818cf8,#a78bfa);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+        .nav-links{display:flex;gap:6px;flex-wrap:wrap}
+        .nav-links a{color:#94a3b8;text-decoration:none;font-size:13px;font-weight:500;padding:8px 14px;border-radius:8px;transition:all 0.2s}
+        .nav-links a:hover,.nav-links a.active{color:#f1f5f9;background:rgba(99,102,241,0.15)}
+        .nav-links a.active{color:#a5b4fc}
+        .container{max-width:1000px;margin:0 auto;padding:32px;position:relative;z-index:1}
+        .page-header{margin-bottom:24px;text-align:center}.page-header h1{font-size:28px;font-weight:700;margin-bottom:6px}
+        .page-header h1 span{background:linear-gradient(135deg,#ec4899,#f43f5e);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+        .page-header p{color:#64748b;font-size:14px}
+        .selector{background:rgba(17,24,39,0.6);border:1px solid rgba(255,255,255,0.06);border-radius:16px;padding:20px;margin-bottom:32px;display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap}
+        .selector label{font-size:12px;color:#64748b;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;display:block;margin-bottom:6px}
+        .selector select{flex:1;min-width:200px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);color:#e2e8f0;padding:10px 14px;border-radius:10px;font-size:14px}
+        .selector select option{background:#1e293b}
+        .analyze-btn{background:linear-gradient(135deg,#ec4899,#f43f5e);border:none;color:white;padding:12px 24px;border-radius:10px;cursor:pointer;font-size:14px;font-weight:600;white-space:nowrap}
+        .analyze-btn:hover{transform:translateY(-1px)}
+        .skill-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+        .skill-card{background:rgba(17,24,39,0.6);border:1px solid rgba(255,255,255,0.06);border-radius:14px;padding:18px;transition:all 0.3s}
+        .skill-card:hover{border-color:rgba(236,72,153,0.3)}
+        .skill-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+        .skill-name{font-size:14px;font-weight:600;color:#f1f5f9}
+        .skill-cat{font-size:10px;font-weight:600;padding:3px 8px;border-radius:20px}
+        .skill-cat.Core{background:rgba(99,102,241,0.15);color:#a5b4fc}
+        .skill-cat.Technical{background:rgba(16,185,129,0.15);color:#34d399}
+        .skill-cat.Soft{background:rgba(245,158,11,0.15);color:#fbbf24}
+        .skill-cat.Practical{background:rgba(236,72,153,0.15);color:#f472b6}
+        .skill-cat.Domain{background:rgba(168,85,247,0.15);color:#c084fc}
+        .skill-bar-bg{height:10px;background:rgba(255,255,255,0.06);border-radius:5px;overflow:hidden;margin-bottom:6px}
+        .skill-bar{height:100%;border-radius:5px;transition:width 1s ease}
+        .skill-bar.high{background:linear-gradient(90deg,#22c55e,#16a34a)}
+        .skill-bar.mid{background:linear-gradient(90deg,#eab308,#f59e0b)}
+        .skill-bar.low{background:linear-gradient(90deg,#ef4444,#f87171)}
+        .skill-labels{display:flex;justify-content:space-between}
+        .skill-required{font-size:11px;color:#64748b}
+        .skill-your{font-size:11px;font-weight:600}
+        .skill-your.high{color:#22c55e}.skill-your.mid{color:#eab308}.skill-your.low{color:#ef4444}
+        .summary-card{background:rgba(17,24,39,0.6);border:1px solid rgba(255,255,255,0.06);border-radius:16px;padding:24px;margin-top:24px}
+        .summary-card h3{font-size:16px;font-weight:700;margin-bottom:12px}
+        .summary-row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.04);font-size:13px}
+        .summary-row:last-child{border-bottom:none}
+        .summary-label{color:#94a3b8}.summary-value{font-weight:600;color:#f1f5f9}
+        .tip{color:#fbbf24;font-size:13px;margin-top:16px;padding:12px;background:rgba(245,158,11,0.06);border:1px solid rgba(245,158,11,0.15);border-radius:10px}
+        .empty-state{text-align:center;padding:60px;color:#475569}
+        .empty-state .icon{font-size:48px;margin-bottom:12px}
+        .self-rate{display:flex;gap:4px;margin:8px 0}
+        .rate-btn{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);color:#94a3b8;font-size:11px;padding:4px 10px;border-radius:6px;cursor:pointer;transition:all 0.2s}
+        .rate-btn:hover,.rate-btn.active{background:rgba(99,102,241,0.15);color:#a5b4fc;border-color:rgba(99,102,241,0.3)}
+        @media(max-width:768px){.skill-grid{grid-template-columns:1fr}.container{padding:16px}.nav-links{display:none}}
+    </style>
+</head>
+<body>
+    <div id="navbar-container"></div>
+    <div class="container">
+        <div class="page-header">
+            <h1>📊 <span>Skill Gap Analyzer</span></h1>
+            <p>Rate your current skills and see what you need to improve for your chosen career</p>
+        </div>
+        <div class="selector">
+            <div style="flex:1;min-width:200px"><label>Select a Course</label><select id="courseSelect"><option value="">Choose a course...</option></select></div>
+            <button class="analyze-btn" onclick="analyzeSkills()">📊 Analyze Skills</button>
+        </div>
+        <div id="skillContent">
+            <div class="empty-state"><div class="icon">📊</div><p>Select a course to see the required skill levels and rate yourself</p></div>
+        </div>
+    </div>
+    <script>
+        if(!(localStorage.getItem('userId')||sessionStorage.getItem('userId')))window.location.href='login.html';
+        let skillData=[];
+        let userRatings={};
+        fetch('/api/all-courses').then(r=>r.json()).then(d=>{
+            if(d.success) document.getElementById('courseSelect').innerHTML='<option value="">Choose a course...</option>'+d.courses.map(c=>`<option value="${c.id}">${c.name} (${c.stream})</option>`).join('');
+        });
+        async function analyzeSkills(){
+            const id=document.getElementById('courseSelect').value;
+            if(!id){alert('Please select a course');return}
+            const res=await fetch(`/api/skill-gap/${id}`).then(r=>r.json());
+            if(!res.success)return;
+            skillData=res.skills;
+            userRatings={};
+            renderSkills();
+        }
+        function rateSkill(skill,val){
+            userRatings[skill]=val;
+            renderSkills();
+        }
+        function renderSkills(){
+            let html='<div class="skill-grid">';
+            skillData.forEach(s=>{
+                const userLvl=userRatings[s.skill]||0;
+                const gap=s.level-userLvl;
+                const cls=userLvl>=s.level?'high':userLvl>=s.level*0.7?'mid':'low';
+                html+=`<div class="skill-card">
+                    <div class="skill-header"><span class="skill-name">${s.skill}</span><span class="skill-cat ${s.category}">${s.category}</span></div>
+                    <div class="skill-bar-bg"><div class="skill-bar ${cls}" style="width:${userLvl}%"></div></div>
+                    <div class="skill-labels"><span class="skill-required">Required: ${s.level}%</span><span class="skill-your ${cls}">Yours: ${userLvl}%</span></div>
+                    <div class="self-rate">
+                        ${[20,40,60,80,100].map(v=>`<button class="rate-btn ${userLvl===v?'active':''}" onclick="rateSkill('${s.skill}',${v})">${v}%</button>`).join('')}
+                    </div></div>`;
+            });
+            html+='</div>';
+            // Summary
+            const rated=Object.keys(userRatings).length;
+            if(rated>0){
+                const total=skillData.length;
+                const gaps=skillData.map(s=>Math.max(0,s.level-(userRatings[s.skill]||0)));
+                const avgGap=Math.round(gaps.reduce((a,b)=>a+b,0)/total);
+                const strengths=skillData.filter(s=>(userRatings[s.skill]||0)>=s.level).length;
+                const weaknesses=skillData.filter(s=>(userRatings[s.skill]||0)<s.level*0.7).length;
+                const readiness=Math.round(((total-gaps.filter(g=>g>0).length)/total)*100);
+                html+=`<div class="summary-card"><h3>📋 Analysis Summary</h3>
+                    <div class="summary-row"><span class="summary-label">Skills Rated</span><span class="summary-value">${rated}/${total}</span></div>
+                    <div class="summary-row"><span class="summary-label">Average Gap</span><span class="summary-value">${avgGap}%</span></div>
+                    <div class="summary-row"><span class="summary-label">Strengths (at/above level)</span><span class="summary-value" style="color:#22c55e">${strengths} skills</span></div>
+                    <div class="summary-row"><span class="summary-label">Needs Improvement</span><span class="summary-value" style="color:#ef4444">${weaknesses} skills</span></div>
+                    <div class="summary-row"><span class="summary-label">Career Readiness</span><span class="summary-value" style="color:#818cf8">${readiness}%</span></div>
+                    <div class="tip">💡 Focus on improving skills with the largest gap first. Take online courses, join workshops, and practice regularly to close the gap.</div>
+                </div>`;
+            }
+            document.getElementById('skillContent').innerHTML=html;
+        }
+        async function logout() {
+            try { await fetch('/logout'); } catch(e){}
+            localStorage.clear();
+            sessionStorage.clear();
+            window.location.href = 'login.html';
+        }
+    </script>
+    <script src="nav.js"></script>
+</body>
+</html>

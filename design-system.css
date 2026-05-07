@@ -1,0 +1,104 @@
+/* ═══════════════════════════════════════════════════════════════
+   CAREER COURSE COMPASS — Design System
+   Professional, clean, white-base design
+   ═══════════════════════════════════════════════════════════════ */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+:root {
+  /* ── Base ── */
+  --bg-page: #faf8f5;
+  --bg-card: #fffdf9;
+  --bg-subtle: #f5f2ed;
+  --bg-muted: #eeebe5;
+  --bg-hover: #f3f0eb;
+
+  /* ── Accent ── */
+  --primary: #4338ca;
+  --primary-hover: #3730a3;
+  --primary-light: rgba(67,56,202,0.06);
+  --primary-border: rgba(67,56,202,0.15);
+  --success: #059669;
+  --success-light: rgba(5,150,105,0.06);
+  --warning: #d97706;
+  --warning-light: rgba(217,119,6,0.06);
+  --danger: #dc2626;
+  --danger-light: rgba(220,38,38,0.06);
+
+  /* ── Stream colors ── */
+  --stream-pcm: #4338ca;
+  --stream-pcb: #059669;
+  --stream-commerce: #d97706;
+  --stream-humanities: #dc2626;
+
+  /* ── Text ── */
+  --text-primary: #111827;
+  --text-secondary: #374151;
+  --text-muted: #6b7280;
+  --text-light: #9ca3af;
+
+  /* ── Border ── */
+  --border: #e8e4dd;
+  --border-hover: #d6d1c9;
+
+  /* ── Shadow ── */
+  --shadow-xs: 0 1px 2px rgba(120,100,70,0.04);
+  --shadow-sm: 0 1px 3px rgba(120,100,70,0.06), 0 1px 2px rgba(120,100,70,0.04);
+  --shadow-md: 0 4px 6px -1px rgba(120,100,70,0.07), 0 2px 4px -2px rgba(120,100,70,0.04);
+
+  /* ── Radius ── */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+
+  /* ── Typography ── */
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: 'JetBrains Mono', 'SF Mono', monospace;
+}
+
+/* ─── RESET ─── */
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+html { -webkit-font-smoothing: antialiased; scroll-behavior: smooth; }
+
+body {
+  font-family: var(--font-sans);
+  background: var(--bg-page);
+  color: var(--text-primary);
+  min-height: 100vh;
+  line-height: 1.5;
+}
+
+/* ─── TYPOGRAPHY ─── */
+h1, h2, h3, h4 {
+  font-family: var(--font-sans);
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1.25;
+  letter-spacing: -0.02em;
+}
+
+/* ─── UTILITY ─── */
+.mono { font-family: var(--font-mono); }
+.text-muted { color: var(--text-muted); }
+
+/* ─── STREAM BADGES ─── */
+.stream-badge {
+  display: inline-flex;
+  align-items: center;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 100px;
+  letter-spacing: 0.02em;
+}
+.stream-badge.PCM       { background: rgba(67,56,202,0.08); color: var(--stream-pcm); }
+.stream-badge.PCB       { background: rgba(5,150,105,0.08); color: var(--stream-pcb); }
+.stream-badge.Commerce  { background: rgba(217,119,6,0.08); color: var(--stream-commerce); }
+.stream-badge.Humanities{ background: rgba(220,38,38,0.08); color: var(--stream-humanities); }
+.stream-badge.All       { background: var(--bg-muted); color: var(--text-muted); }
+
+/* ─── SCROLLBAR ─── */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 10px; }
+::-webkit-scrollbar-thumb:hover { background: #9ca3af; }

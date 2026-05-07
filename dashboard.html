@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard | Career Course Compass</title>
+    <meta name="description" content="Your learning dashboard — track streaks, badges, progress, and saved courses.">
+    <link rel="stylesheet" href="design-system.css">
+    <style>
+        .page-wrap { position: relative; z-index: 1; }
+        .container { max-width: 1300px; margin: 0 auto; padding: 32px; }
+
+        /* ─── WELCOME ─── */
+        .welcome { margin-bottom: 28px; }
+        .welcome h1 { font-size: 28px; margin-bottom: 6px; }
+        .welcome p { color: var(--text-400); font-size: 14px; }
+
+        /* ─── QUOTE ─── */
+        .quote-card {
+            background: var(--bg-glass);
+            backdrop-filter: blur(16px);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 24px 28px;
+            margin-bottom: 28px;
+            position: relative;
+            overflow: hidden;
+        }
+        .quote-card::before {
+            content: '"';
+            position: absolute;
+            top: -10px; left: 16px;
+            font-size: 80px;
+            color: rgba(91,76,219,0.1);
+            font-family: Georgia, serif;
+            line-height: 1;
+        }
+        .quote-text { font-size: 15px; color: var(--text-200); font-style: italic; line-height: 1.7; position: relative; z-index: 1; }
+        .quote-author { font-size: 12px; color: var(--accent-indigo); font-weight: 700; margin-top: 10px; font-family: var(--font-mono); }
+
+        /* ─── STAT CARDS ─── */
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(185px, 1fr)); gap: 16px; margin-bottom: 32px; }
+        .stat-card {
+            background: var(--bg-glass-card);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 22px;
+            transform-style: preserve-3d;
+            will-change: transform;
+            transition: transform 0.5s cubic-bezier(.22,.68,0,.98), border-color 0.3s, box-shadow 0.3s;
+        }
+        .stat-card:hover {
+            border-color: var(--border-accent);
+            box-shadow: var(--shadow-glow-indigo);
+        }
+        .stat-icon { font-size: 28px; margin-bottom: 10px; }
+        .stat-value {
+            font-size: 30px;
+            font-weight: 800;
+            color: var(--text-100);
+            font-family: var(--font-display);
+        }
+        .stat-label {
+            font-size: 10px;
+            font-weight: 700;
+            color: var(--text-500);
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            margin-top: 4px;
+            font-family: var(--font-mono);
+        }
+
+        /* Flame animation for streak card */
+        .flame-wrap { display: inline-block; position: relative; }
+        .flame-icon { font-size: 28px; filter: brightness(1); }
+        .flame-active .flame-icon {
+            animation: flamePulse 1.2s ease-in-out infinite;
+        }
+        @keyframes flamePulse {
+            0%, 100% { filter: brightness(1) drop-shadow(0 0 4px rgba(255,140,0,0.3)); transform: scale(1); }
+            50%      { filter: brightness(1.3) drop-shadow(0 0 12px rgba(255,140,0,0.6)); transform: scale(1.1); }
+        }
+
+        /* ─── SECTION ─── */
+        .section { margin-bottom: 32px; }
+        .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+        .section-title { font-size: 18px; font-weight: 700; font-family: var(--font-display); }
+        .section-link { color: var(--accent-indigo); font-size: 13px; text-decoration: none; font-weight: 600; font-family: var(--font-mono); }
+        .section-link:hover { text-decoration: underline; }
+
+        /* ─── XP PROGRESS BAR ─── */
+        .progress-overview {
+            background: var(--bg-glass-card);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 24px;
+        }
+        .progress-bar-bg {
+            height: 14px;
+            background: rgba(255,255,255,0.04);
+            border-radius: 7px;
+            overflow: hidden;
+            margin: 14px 0 10px;
+            position: relative;
+        }
+        .progress-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent-indigo), #7c3aed, var(--accent-emerald));
+            border-radius: 7px;
+            transition: width 1.2s cubic-bezier(.22,.68,0,.98);
+            position: relative;
+        }
+        .progress-bar-fill::after {
+            content: '';
+            position: absolute; inset: 0;
+            background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.15) 50%, transparent 100%);
+            background-size: 200% 100%;
+            animation: shimmerBar 2s ease-in-out infinite;
+        }
+        @keyframes shimmerBar {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+        .progress-stats { display: flex; gap: 24px; margin-top: 8px; }
+        .progress-stat { font-size: 13px; color: var(--text-400); font-family: var(--font-mono); }
+        .progress-stat strong { color: var(--text-100); }
+
+        /* ─── BADGE GRID ─── */
+        .badge-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 12px; }
+        .badge-card {
+            background: var(--bg-glass-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            padding: 18px;
+            text-align: center;
+            perspective: 600px;
+        }
+        .badge-card-inner {
+            transition: transform 0.6s ease;
+            transform-style: preserve-3d;
+        }
+        .badge-card.earned .badge-card-inner {
+            animation: badgeFlipReveal 0.8s ease 0.2s both;
+        }
+        @keyframes badgeFlipReveal {
+            0%   { transform: rotateY(180deg) scale(0.7); opacity: 0; }
+            60%  { transform: rotateY(-10deg) scale(1.05); opacity: 1; }
+            100% { transform: rotateY(0deg) scale(1); opacity: 1; }
+        }
+        .badge-card.earned { border-color: var(--border-accent); }
+        .badge-card.locked { opacity: 0.35; filter: grayscale(1); }
+        .badge-icon { font-size: 34px; margin-bottom: 8px; }
+        .badge-name { font-size: 12px; font-weight: 700; color: var(--text-200); font-family: var(--font-display); }
+        .badge-desc { font-size: 10px; color: var(--text-500); margin-top: 4px; font-family: var(--font-mono); }
+
+        /* ─── COURSE CARDS ─── */
+        .course-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; }
+        .course-card {
+            background: var(--bg-glass-card);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 22px;
+            transition: all 0.3s;
+        }
+        .course-card:hover { border-color: var(--border-accent); transform: translateY(-3px); box-shadow: var(--shadow-glow-indigo); }
+        .course-card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
+        .course-card h3 { font-size: 15px; font-weight: 700; color: var(--text-100); line-height: 1.3; flex: 1; font-family: var(--font-display); }
+        .course-card p { font-size: 13px; color: var(--text-400); line-height: 1.5; margin-bottom: 14px; }
+        .course-card-footer { display: flex; align-items: center; justify-content: space-between; }
+        .course-meta { font-size: 12px; color: var(--text-500); font-family: var(--font-mono); }
+
+        .remove-btn {
+            background: var(--accent-rose-soft);
+            border: 1px solid rgba(232,69,107,0.2);
+            color: var(--accent-rose);
+            font-size: 12px;
+            padding: 6px 14px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-family: var(--font-body);
+            transition: all 0.2s;
+        }
+        .remove-btn:hover { background: rgba(232,69,107,0.18); }
+
+        /* ─── QUICK LINKS ─── */
+        .quick-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 12px; }
+        .quick-link {
+            background: var(--bg-glass-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            padding: 20px;
+            text-align: center;
+            text-decoration: none;
+            transition: all 0.3s;
+            display: block;
+        }
+        .quick-link:hover { border-color: var(--border-accent); transform: translateY(-3px); box-shadow: var(--shadow-glow-indigo); }
+        .quick-icon { font-size: 28px; margin-bottom: 8px; }
+        .quick-title { font-size: 13px; font-weight: 700; color: var(--text-100); font-family: var(--font-display); }
+        .quick-desc { font-size: 11px; color: var(--text-500); margin-top: 4px; font-family: var(--font-mono); }
+
+        /* ─── NOTIFICATION PANEL ─── */
+        .notif-panel {
+            display: none;
+            position: fixed;
+            top: 64px; right: 32px;
+            width: 360px; max-height: 480px;
+            background: var(--bg-glass-strong);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            z-index: 200;
+            overflow: hidden;
+            box-shadow: var(--shadow-lg);
+        }
+        .notif-panel.open { display: block; animation: slideDown 0.2s ease; }
+        @keyframes slideDown { from { opacity:0; transform: translateY(-10px); } to { opacity:1; transform: translateY(0); } }
+        .notif-header { padding: 16px 20px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+        .notif-header h3 { font-size: 15px; font-weight: 700; font-family: var(--font-display); }
+        .mark-read-btn { background: none; border: none; color: var(--accent-indigo); font-size: 12px; cursor: pointer; font-weight: 600; font-family: var(--font-mono); }
+        .notif-list { max-height: 400px; overflow-y: auto; padding: 8px; }
+        .notif-item { padding: 12px 14px; border-radius: 10px; margin-bottom: 4px; font-size: 13px; color: var(--text-300); transition: all 0.2s; }
+        .notif-item.unread { background: var(--accent-indigo-soft); color: var(--text-200); }
+        .notif-time { font-size: 10px; color: var(--text-500); margin-top: 4px; font-family: var(--font-mono); }
+
+        .empty-state { text-align: center; padding: 40px 20px; color: var(--text-500); }
+        .empty-state .empty-icon { font-size: 48px; margin-bottom: 12px; }
+        .empty-state p { font-size: 14px; }
+        .empty-state a { color: var(--accent-indigo); }
+
+        @media (max-width: 768px) {
+            .container { padding: 16px; }
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+            .badge-grid { grid-template-columns: repeat(3, 1fr); }
+            .course-grid { grid-template-columns: 1fr; }
+            .notif-panel { right: 16px; width: calc(100% - 32px); }
+        }
+    </style>
+</head>
+<body>
+    <div id="navbar-container"></div>
+
+    <div class="ambient-blob blob-indigo"></div>
+    <div class="ambient-blob blob-emerald"></div>
+    <div class="float-cube" style="transform-style:preserve-3d"><div class="face"></div><div class="face"></div><div class="face"></div><div class="face"></div><div class="face"></div><div class="face"></div></div>
+    <div class="float-ring" style="transform-style:preserve-3d"><div class="ring-seg"></div><div class="ring-seg"></div><div class="ring-seg"></div><div class="ring-seg"></div><div class="ring-seg"></div></div>
+    <div class="dot-grid"></div>
+
+    <!-- Notification Panel -->
+    <div class="notif-panel" id="notifPanel">
+        <div class="notif-header">
+            <h3>Notifications</h3>
+            <button class="mark-read-btn" onclick="markAllRead()">Mark all read</button>
+        </div>
+        <div class="notif-list" id="notifList"></div>
+    </div>
+
+    <div class="page-wrap">
+        <div class="container">
+            <!-- Welcome -->
+            <div class="welcome">
+                <h1>Welcome back, <span class="gradient-text" id="userName">Student</span>!</h1>
+                <p id="welcomeSubtext">Track your learning journey and career progress</p>
+            </div>
+
+            <!-- Quote -->
+            <div class="quote-card">
+                <p class="quote-text" id="quoteText">Loading…</p>
+                <p class="quote-author" id="quoteAuthor"></p>
+            </div>
+
+            <!-- Stats -->
+            <div class="stats-grid">
+                <div class="stat-card tilt-card">
+                    <div class="flame-wrap" id="flameWrap">
+                        <span class="flame-icon">🔥</span>
+                    </div>
+                    <div class="stat-value" id="streakCount">0</div>
+                    <div class="stat-label">Day Streak</div>
+                </div>
+                <div class="stat-card tilt-card">
+                    <div class="stat-icon">📚</div>
+                    <div class="stat-value" id="bookmarkCount">0</div>
+                    <div class="stat-label">Saved Courses</div>
+                </div>
+                <div class="stat-card tilt-card">
+                    <div class="stat-icon">✅</div>
+                    <div class="stat-value" id="completedCount">0</div>
+                    <div class="stat-label">Completed</div>
+                </div>
+                <div class="stat-card tilt-card">
+                    <div class="stat-icon">🏆</div>
+                    <div class="stat-value" id="badgeCount">0</div>
+                    <div class="stat-label">Badges Earned</div>
+                </div>
+                <div class="stat-card tilt-card">
+                    <div class="stat-icon">📊</div>
+                    <div class="stat-value" id="progressPercent">0%</div>
+                    <div class="stat-label">Progress</div>
+                </div>
+            </div>
+
+            <!-- XP Progress Bar -->
+            <div class="section">
+                <div class="section-header"><h2 class="section-title">Learning Progress</h2></div>
+                <div class="progress-overview">
+                    <div style="display:flex;justify-content:space-between;align-items:center;">
+                        <span style="font-size:14px;font-weight:700;font-family:var(--font-display);" id="progressLabel">0% Complete</span>
+                        <span style="font-size:11px;color:var(--text-500);font-family:var(--font-mono);" id="progressDetail">0 of 0 courses</span>
+                    </div>
+                    <div class="progress-bar-bg">
+                        <div class="progress-bar-fill" id="progressBar" style="width:0%"></div>
+                    </div>
+                    <div class="progress-stats">
+                        <div class="progress-stat">✅ <strong id="pCompleted">0</strong> Completed</div>
+                        <div class="progress-stat">🔄 <strong id="pInProgress">0</strong> In Progress</div>
+                        <div class="progress-stat">📋 <strong id="pNotStarted">0</strong> Not Started</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Badges -->
+            <div class="section">
+                <div class="section-header">
+                    <h2 class="section-title">Achievements</h2>
+                    <span style="font-size:12px;color:var(--text-500);font-family:var(--font-mono);" id="badgeSummary">0 / 9 earned</span>
+                </div>
+                <div class="badge-grid" id="badgeGrid"></div>
+            </div>
+
+            <!-- Bookmarked Courses -->
+            <div class="section">
+                <div class="section-header">
+                    <h2 class="section-title">Saved Courses</h2>
+                    <a href="bookmarks.html" class="section-link">View All →</a>
+                </div>
+                <div class="course-grid" id="bookmarkGrid"></div>
+            </div>
+
+            <!-- Quick Links -->
+            <div class="section">
+                <div class="section-header"><h2 class="section-title">Explore Tools</h2></div>
+                <div class="quick-grid">
+                    <a href="roadmap.html" class="quick-link">
+                        <div class="quick-icon">🗺️</div><div class="quick-title">Career Roadmap</div><div class="quick-desc">Step-by-step timeline</div>
+                    </a>
+                    <a href="colleges.html" class="quick-link">
+                        <div class="quick-icon">🏫</div><div class="quick-title">College Finder</div><div class="quick-desc">Top colleges for you</div>
+                    </a>
+                    <a href="skill-gap.html" class="quick-link">
+                        <div class="quick-icon">📊</div><div class="quick-title">Skill Gap Analyzer</div><div class="quick-desc">Rate your skills</div>
+                    </a>
+                    <a href="analytics.html" class="quick-link">
+                        <div class="quick-icon">📈</div><div class="quick-title">My Analytics</div><div class="quick-desc">Progress & reports</div>
+                    </a>
+                    <a href="compare.html" class="quick-link">
+                        <div class="quick-icon">⚖️</div><div class="quick-title">Compare Courses</div><div class="quick-desc">Side-by-side analysis</div>
+                    </a>
+                    <a href="admin-dashboard.html" class="quick-link" id="adminLink" style="display:none">
+                        <div class="quick-icon">⚙️</div><div class="quick-title">Admin Panel</div><div class="quick-desc">Platform analytics</div>
+                    </a>
+                </div>
+                <script>if(localStorage.getItem('isAdmin')==='1'){document.getElementById('adminLink').style.display='block';}</script>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const userId = localStorage.getItem('userId') || sessionStorage.getItem('userId');
+        const userEmail = localStorage.getItem('userEmail') || sessionStorage.getItem('userEmail');
+        if (!userId) window.location.href = 'login.html';
+
+        const _origFetch = window.fetch;
+        window.fetch = function(url, opts = {}) { opts.credentials = opts.credentials || 'include'; return _origFetch.call(this, url, opts); };
+
+        function esc(s) {
+            if (!s) return '';
+            return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+        }
+
+        async function loadDashboard() {
+            try {
+                await fetch('/api/streaks', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ userId }) });
+                await fetch('/api/badges/check-login', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ userId }) });
+
+                const [dashRes, badgesRes, bookmarksRes] = await Promise.all([
+                    fetch(`/api/dashboard/${userId}`).then(r => r.json()),
+                    fetch(`/api/badges/${userId}`).then(r => r.json()),
+                    fetch(`/api/bookmarks/${userId}`).then(r => r.json()),
+                ]);
+
+                if (dashRes.success) {
+                    const d = dashRes.dashboard;
+                    document.getElementById('userName').textContent = d.profile?.name || userEmail?.split('@')[0] || 'Student';
+                    if (d.dailyQuote) {
+                        document.getElementById('quoteText').textContent = d.dailyQuote.text;
+                        document.getElementById('quoteAuthor').textContent = `— ${d.dailyQuote.author}`;
+                    }
+
+                    // Stats with count-up
+                    const streak = d.streak?.current_streak || 0;
+                    const setWithCountUp = (id, val) => {
+                        const el = document.getElementById(id);
+                        if (typeof animateCountUp === 'function') animateCountUp(el, val, 900);
+                        else el.textContent = val;
+                    };
+                    setWithCountUp('streakCount', streak);
+                    setWithCountUp('bookmarkCount', d.bookmarkCount || 0);
+                    setWithCountUp('completedCount', d.progressStats?.completed || 0);
+                    setWithCountUp('badgeCount', d.badgeCount || 0);
+
+                    // Flame if streak > 0
+                    if (streak > 0) document.getElementById('flameWrap').classList.add('flame-active');
+
+                    const total = (d.progressStats?.completed || 0) + (d.progressStats?.in_progress || 0) + (d.progressStats?.not_started || 0);
+                    const pct = total > 0 ? Math.round((d.progressStats.completed / total) * 100) : 0;
+                    document.getElementById('progressPercent').textContent = pct + '%';
+                    document.getElementById('progressLabel').textContent = pct + '% Complete';
+                    document.getElementById('progressDetail').textContent = `${d.progressStats?.completed || 0} of ${total} courses`;
+                    setTimeout(() => { document.getElementById('progressBar').style.width = pct + '%'; }, 200);
+                    document.getElementById('pCompleted').textContent = d.progressStats?.completed || 0;
+                    document.getElementById('pInProgress').textContent = d.progressStats?.in_progress || 0;
+                    document.getElementById('pNotStarted').textContent = d.progressStats?.not_started || 0;
+                }
+
+                if (badgesRes.success) {
+                    document.getElementById('badgeSummary').textContent = `${badgesRes.totalEarned} / ${badgesRes.totalAvailable} earned`;
+                    document.getElementById('badgeGrid').innerHTML = badgesRes.badges.map(b => `
+                        <div class="badge-card ${b.earned ? 'earned' : 'locked'}">
+                            <div class="badge-card-inner">
+                                <div class="badge-icon">${b.icon}</div>
+                                <div class="badge-name">${esc(b.name)}</div>
+                                <div class="badge-desc">${esc(b.description)}</div>
+                            </div>
+                        </div>
+                    `).join('');
+                }
+
+                if (bookmarksRes.success && bookmarksRes.bookmarks.length > 0) {
+                    document.getElementById('bookmarkGrid').innerHTML = bookmarksRes.bookmarks.slice(0, 6).map(b => `
+                        <div class="course-card">
+                            <div class="course-card-header">
+                                <h3>${esc(b.name)}</h3>
+                                <span class="stream-badge ${b.stream}">${esc(b.stream)}</span>
+                            </div>
+                            <p>${esc(b.description) || 'No description'}</p>
+                            <div class="course-card-footer">
+                                <span class="course-meta">${b.duration_months ? b.duration_months + ' mo' : ''}</span>
+                                <button class="remove-btn" onclick="removeBookmark(${b.course_id})">Remove</button>
+                            </div>
+                        </div>
+                    `).join('');
+                } else {
+                    document.getElementById('bookmarkGrid').innerHTML = `
+                        <div class="empty-state" style="grid-column:1/-1;">
+                            <div class="empty-icon">🔖</div>
+                            <p>No courses saved yet. <a href="recommendation.html">Get recommendations</a> and bookmark your favorites!</p>
+                        </div>`;
+                }
+            } catch (err) {
+                console.error('Dashboard load error:', err);
+            }
+        }
+
+        async function removeBookmark(courseId) {
+            await fetch('/api/bookmarks', { method: 'DELETE', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ userId, courseId }) });
+            loadDashboard();
+        }
+
+        function toggleNotifications() {
+            const panel = document.getElementById('notifPanel');
+            panel.classList.toggle('open');
+            if (panel.classList.contains('open')) {
+                fetch(`/api/notifications/${userId}`).then(r => r.json()).then(res => {
+                    if (res.success) {
+                        document.getElementById('notifList').innerHTML = res.notifications.length > 0
+                            ? res.notifications.map(n => `
+                                <div class="notif-item ${n.read ? '' : 'unread'}">
+                                    ${esc(n.message)}
+                                    <div class="notif-time">${new Date(n.created_at).toLocaleDateString()}</div>
+                                </div>`).join('')
+                            : '<div class="empty-state"><p>No notifications yet</p></div>';
+                    }
+                });
+            }
+        }
+
+        async function markAllRead() {
+            await fetch(`/api/notifications/${userId}/read`, { method: 'PUT' });
+            document.querySelectorAll('.notif-item.unread').forEach(el => el.classList.remove('unread'));
+        }
+
+        async function logout() {
+            try { await fetch('/logout'); } catch(e){}
+            localStorage.clear(); sessionStorage.clear();
+            window.location.href = 'login.html';
+        }
+
+        loadDashboard();
+    </script>
+    <script src="nav.js"></script>
+</body>
+</html>
