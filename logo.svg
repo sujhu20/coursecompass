@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="g1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#4338CA"/>
+      <stop offset="100%" stop-color="#7C3AED"/>
+    </linearGradient>
+    <linearGradient id="g2" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#6366F1"/>
+      <stop offset="100%" stop-color="#8B5CF6"/>
+    </linearGradient>
+  </defs>
+  <!-- Outer compass ring (C shape) -->
+  <path d="M256 56 C145 56 56 145 56 256 C56 367 145 456 256 456 C310 456 358 434 394 399" 
+        fill="none" stroke="url(#g1)" stroke-width="48" stroke-linecap="round"/>
+  <!-- Compass needle - North (indigo) -->
+  <polygon points="256,80 230,256 256,240 282,256" fill="url(#g1)"/>
+  <!-- Compass needle - South (lighter) -->
+  <polygon points="256,432 230,256 256,272 282,256" fill="url(#g2)" opacity="0.5"/>
+  <!-- Center dot -->
+  <circle cx="256" cy="256" r="18" fill="white"/>
+  <circle cx="256" cy="256" r="11" fill="url(#g1)"/>
+  <!-- Graduation cap on top -->
+  <path d="M256 52 L340 92 L256 132 L172 92 Z" fill="url(#g1)"/>
+  <rect x="244" y="92" width="24" height="30" rx="2" fill="url(#g2)"/>
+  <!-- Tassel -->
+  <line x1="340" y1="92" x2="340" y2="130" stroke="url(#g2)" stroke-width="4" stroke-linecap="round"/>
+  <circle cx="340" cy="134" r="6" fill="url(#g2)"/>
+</svg>

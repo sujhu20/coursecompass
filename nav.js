@@ -51,11 +51,19 @@ window.authFetch = function(url, options = {}) {
         gap: 16px;
       }
       .ccc-nav-logo {
+        display: flex;
+        align-items: center;
+        gap: 8px;
         font-size: 15px;
         font-weight: 700;
         color: #111827;
+        text-decoration: none;
         white-space: nowrap;
         letter-spacing: -0.02em;
+      }
+      .ccc-nav-logo img {
+        width: 24px;
+        height: 24px;
       }
       .ccc-nav-logo span {
         color: #4338ca;
@@ -110,7 +118,10 @@ window.authFetch = function(url, options = {}) {
     </style>
     <nav class="ccc-nav">
       <div class="ccc-nav-inner">
-        <div class="ccc-nav-logo">Career <span>Course</span> Compass</div>
+        <a href="recommendation.html" class="ccc-nav-logo">
+          <img src="logo.svg" alt="CCC Logo">
+          Career <span>Course</span> Compass
+        </a>
         <div class="ccc-nav-links">${linksHTML}</div>
         <div class="ccc-nav-right">
           <button class="ccc-logout" onclick="logout()">Log out</button>
