@@ -157,6 +157,20 @@
     <script>
         const courseId = new URLSearchParams(window.location.search).get('id');
 
+        // Auth token injection for Vercel serverless
+        const _origFetch = window.fetch;
+        window.fetch = function(url, opts = {}) {
+            opts.credentials = opts.credentials || 'include';
+            const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
+            if (token) {
+                opts.headers = opts.headers || {};
+                if (typeof opts.headers === 'object' && !(opts.headers instanceof Headers)) {
+                    opts.headers['Authorization'] = 'Bearer ' + token;
+                }
+            }
+            return _origFetch.call(this, url, opts);
+        };
+
         window.addEventListener('DOMContentLoaded', () => {
             if (!courseId) {
                 document.getElementById('courseDetailsContainer').innerHTML = `

@@ -16,6 +16,32 @@ require("dotenv").config();
 
 const gOAuthClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
+// ─── STATELESS TOKEN AUTH (for Vercel serverless) ─────────────────────
+// Vercel's serverless functions lose in-memory sessions between cold starts.
+// These helpers create/verify HMAC-signed tokens stored in localStorage.
+const TOKEN_SECRET = process.env.SESSION_SECRET || crypto.randomBytes(32).toString('hex');
+
+function generateToken(userId, email) {
+  const payload = `${userId}:${email}:${Date.now()}`;
+  const sig = crypto.createHmac('sha256', TOKEN_SECRET).update(payload).digest('hex');
+  return Buffer.from(`${payload}:${sig}`).toString('base64');
+}
+
+function verifyToken(token) {
+  try {
+    const decoded = Buffer.from(token, 'base64').toString('utf8');
+    const parts = decoded.split(':');
+    if (parts.length < 4) return null;
+    const sig = parts.pop();
+    const payload = parts.join(':');
+    // Re-extract userId, email, timestamp from payload
+    const [userId, email] = parts;
+    const expectedSig = crypto.createHmac('sha256', TOKEN_SECRET).update(payload).digest('hex');
+    if (sig !== expectedSig) return null;
+    return { id: parseInt(userId), email };
+  } catch { return null; }
+}
+
 const isProduction = process.env.NODE_ENV === 'production';
 
 const app = express();
@@ -78,6 +104,16 @@ const requireAuth = (req, res, next) => {
   if (!req.session?.user && req.user) {
     req.session.user = { id: req.user.id, email: req.user.email, is_admin: req.user.is_admin || 0 };
   }
+  // Fallback: verify token from Authorization header (Vercel serverless)
+  if (!req.session?.user) {
+    const authHeader = req.headers.authorization;
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      const tokenUser = verifyToken(authHeader.slice(7));
+      if (tokenUser) {
+        req.session.user = { id: tokenUser.id, email: tokenUser.email, is_admin: 0 };
+      }
+    }
+  }
   if (!req.session?.user) {
     return res.status(401).json({
       success: false,
@@ -136,6 +172,9 @@ app.get('/api/health', (req, res) => {
 const db = require('./db');
 
 // ==================== DATABASE TABLES ====================
+// Only create tables in SQLite mode (local dev).
+// For MySQL (Vercel production), tables are created via migration.sql.
+if (!db.isMySQL) {
 
 // Create users table (with profile fields)
 db.run(`
@@ -217,7 +256,7 @@ db.run(`
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     user_id INTEGER NOT NULL,
     course_id INTEGER NOT NULL,
-    saved_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY(user_id) REFERENCES users(id),
     FOREIGN KEY(course_id) REFERENCES courses(id),
     UNIQUE(user_id, course_id)
@@ -300,6 +339,8 @@ setTimeout(() => {
   db.run("CREATE INDEX IF NOT EXISTS idx_badges_user ON badges(user_id)");
   db.run("CREATE INDEX IF NOT EXISTS idx_courses_stream ON courses(stream)");
 }, 2000);
+
+} // end if (!db.isMySQL)
 
 // Google OAuth Strategy
 passport.use(new GoogleStrategy({
@@ -873,11 +914,12 @@ app.post("/api/login", authLimiter, (req, res) => {
       email: user.email,
       is_admin: user.is_admin || 0
     };
+    const token = generateToken(user.id, user.email);
     req.session.save((err) => {
       if (err) {
         return res.status(500).json({ success: false, message: 'Session error. Please try again.' });
       }
-      res.json({ message: "Login successful", success: true, userId: user.id, email: user.email, isAdmin: user.is_admin === 1, is_admin: user.is_admin || 0 });
+      res.json({ message: "Login successful", success: true, userId: user.id, email: user.email, isAdmin: user.is_admin === 1, is_admin: user.is_admin || 0, token });
     });
   });
 });
@@ -906,9 +948,10 @@ app.post("/api/google-auth", authLimiter, async (req, res) => {
 
       if (user) {
         req.session.user = { id: user.id, email: user.email, is_admin: user.is_admin || 0 };
+        const token = generateToken(user.id, user.email);
         req.session.save((err) => {
           if (err) return res.status(500).json({ success: false, message: 'Session error.' });
-          res.json({ message: "Login successful", success: true, userId: user.id, email: user.email, is_admin: user.is_admin || 0 });
+          res.json({ message: "Login successful", success: true, userId: user.id, email: user.email, is_admin: user.is_admin || 0, token });
         });
       } else {
         const hashedPw = await bcrypt.hash(crypto.randomBytes(32).toString('hex'), 10);
@@ -917,10 +960,11 @@ app.post("/api/google-auth", authLimiter, async (req, res) => {
           [email, name, hashedPw],
           function(err) {
             if (err) return res.status(500).json({ success: false, message: 'Failed to create account.' });
+            const token = generateToken(this.lastID, email);
             req.session.user = { id: this.lastID, email, is_admin: 0 };
             req.session.save((err) => {
               if (err) return res.status(500).json({ success: false, message: 'Session error.' });
-              res.json({ message: "Account created and logged in with Google", success: true, userId: this.lastID, email, is_admin: 0 });
+              res.json({ message: "Account created and logged in with Google", success: true, userId: this.lastID, email, is_admin: 0, token });
             });
           }
         );
@@ -960,14 +1004,22 @@ app.get("/logout", (req, res) => {
 
 // Check Authentication Status
 app.get("/api/auth-status", (req, res) => {
+  // Check session first
   if (req.session?.user) {
-    res.json({ 
+    return res.json({ 
       authenticated: true, 
       user: req.session.user
     });
-  } else {
-    res.json({ authenticated: false, user: null });
   }
+  // Fallback: check token from Authorization header
+  const authHeader = req.headers.authorization;
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    const tokenUser = verifyToken(authHeader.slice(7));
+    if (tokenUser) {
+      return res.json({ authenticated: true, user: tokenUser });
+    }
+  }
+  res.json({ authenticated: false, user: null });
 });
 
 
@@ -1148,8 +1200,14 @@ app.put("/api/progress", apiLimiter, requireAuth, (req, res) => {
   const { userId, courseId, status } = req.body;
   if (!userId || !courseId || !status) return res.status(400).json({ message: "userId, courseId, status required", success: false });
   if (!['not_started', 'in_progress', 'completed'].includes(status)) return res.status(400).json({ message: "Invalid status", success: false });
-  db.run(`INSERT INTO progress (user_id, course_id, status, updated_at) VALUES (?, ?, ?, CURRENT_TIMESTAMP)
-    ON CONFLICT(user_id, course_id) DO UPDATE SET status = ?, updated_at = CURRENT_TIMESTAMP`, [userId, courseId, status, status], function(err) {
+  // Use MySQL-compatible upsert when in MySQL mode
+  const upsertSQL = db.isMySQL
+    ? `INSERT INTO progress (user_id, course_id, status, updated_at) VALUES (?, ?, ?, CURRENT_TIMESTAMP)
+       ON DUPLICATE KEY UPDATE status = VALUES(status), updated_at = CURRENT_TIMESTAMP`
+    : `INSERT INTO progress (user_id, course_id, status, updated_at) VALUES (?, ?, ?, CURRENT_TIMESTAMP)
+       ON CONFLICT(user_id, course_id) DO UPDATE SET status = ?, updated_at = CURRENT_TIMESTAMP`;
+  const upsertParams = db.isMySQL ? [userId, courseId, status] : [userId, courseId, status, status];
+  db.run(upsertSQL, upsertParams, function(err) {
     if (err) return res.status(500).json({ message: "Failed to update", success: false });
     if (status === 'completed') {
       db.get("SELECT COUNT(*) as count FROM progress WHERE user_id = ? AND status = 'completed'", [userId], (err, row) => {
@@ -1176,8 +1234,14 @@ app.post("/api/ratings", apiLimiter, requireAuth, (req, res) => {
   if (!userId || !courseId || !stars) return res.status(400).json({ message: "userId, courseId, stars required", success: false });
   if (stars < 1 || stars > 5) return res.status(400).json({ message: "Stars must be 1-5", success: false });
   const cleanReview = review ? review.replace(/[<>]/g, '').substring(0, 500) : null;
-  db.run(`INSERT INTO ratings (user_id, course_id, stars, review) VALUES (?, ?, ?, ?)
-    ON CONFLICT(user_id, course_id) DO UPDATE SET stars = ?, review = ?, created_at = CURRENT_TIMESTAMP`, [userId, courseId, stars, cleanReview, stars, cleanReview], function(err) {
+  // Use MySQL-compatible upsert when in MySQL mode
+  const upsertSQL = db.isMySQL
+    ? `INSERT INTO ratings (user_id, course_id, stars, review) VALUES (?, ?, ?, ?)
+       ON DUPLICATE KEY UPDATE stars = VALUES(stars), review = VALUES(review), created_at = CURRENT_TIMESTAMP`
+    : `INSERT INTO ratings (user_id, course_id, stars, review) VALUES (?, ?, ?, ?)
+       ON CONFLICT(user_id, course_id) DO UPDATE SET stars = ?, review = ?, created_at = CURRENT_TIMESTAMP`;
+  const upsertParams = db.isMySQL ? [userId, courseId, stars, cleanReview] : [userId, courseId, stars, cleanReview, stars, cleanReview];
+  db.run(upsertSQL, upsertParams, function(err) {
     if (err) return res.status(500).json({ message: "Failed to save", success: false });
     db.run("INSERT OR IGNORE INTO badges (user_id, badge_type) VALUES (?, 'first_review')", [userId]);
     res.json({ message: "Rating saved", success: true });
@@ -1628,12 +1692,12 @@ app.get("/api/youtube-info/:videoId", apiLimiter, (req, res) => {
 
 // ── Health Check ──
 app.get('/api/health', (req, res) => {
-  const dbStatus = require('./db').isPostgres ? 'PostgreSQL' : 'SQLite';
+  const dbStatus = require('./db').isMySQL ? 'MySQL' : 'SQLite';
   res.json({ 
     status: 'ok', 
     database: dbStatus,
-    env_detected: !!(process.env.SUPABASE_URL || process.env.DATABASE_URL),
-    version: '1.0.1'
+    env_detected: !!process.env.MYSQL_URL,
+    version: '1.0.2'
   });
 });
 

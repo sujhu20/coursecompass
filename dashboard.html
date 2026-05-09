@@ -375,7 +375,17 @@
         if (!userId) window.location.href = 'login.html';
 
         const _origFetch = window.fetch;
-        window.fetch = function(url, opts = {}) { opts.credentials = opts.credentials || 'include'; return _origFetch.call(this, url, opts); };
+        window.fetch = function(url, opts = {}) {
+            opts.credentials = opts.credentials || 'include';
+            const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
+            if (token) {
+                opts.headers = opts.headers || {};
+                if (typeof opts.headers === 'object' && !(opts.headers instanceof Headers)) {
+                    opts.headers['Authorization'] = 'Bearer ' + token;
+                }
+            }
+            return _origFetch.call(this, url, opts);
+        };
 
         function esc(s) {
             if (!s) return '';

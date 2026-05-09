@@ -111,6 +111,7 @@
                     localStorage.setItem('userEmail', data.email);
                     localStorage.setItem('userId', data.userId);
                     localStorage.setItem('isAdmin', data.isAdmin ? '1' : '0');
+                    if (data.token) localStorage.setItem('authToken', data.token);
                     showMessage('Signed in successfully. Redirecting…', 'success', msg);
                     setTimeout(() => { window.location.href = 'recommendation.html'; }, 800);
                 } else { showMessage(data.message, 'error', msg); }

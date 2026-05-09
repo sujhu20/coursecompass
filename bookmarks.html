@@ -119,10 +119,11 @@
         let all = [], progMap = {};
 
         async function load() {
+            const af = window.authFetch || fetch;
             try {
                 const [bm, pr] = await Promise.all([
-                    fetch('/api/bookmarks/' + userId, { credentials:'include' }).then(r => r.json()),
-                    fetch('/api/progress/' + userId, { credentials:'include' }).then(r => r.json())
+                    af('/api/bookmarks/' + userId, { credentials:'include' }).then(r => r.json()),
+                    af('/api/progress/' + userId, { credentials:'include' }).then(r => r.json())
                 ]);
                 if (pr.success) pr.progress.forEach(p => { progMap[p.course_id] = p.status; });
                 if (bm.success) { all = bm.bookmarks; document.getElementById('countAll').textContent = all.length; render(all); }
@@ -164,12 +165,12 @@
         }
 
         async function updateProg(cid, status) {
-            try { await fetch('/api/progress', { method:'PUT', headers:{'Content-Type':'application/json'}, credentials:'include', body: JSON.stringify({ userId, courseId: cid, status }) }); progMap[cid] = status; } catch(e) { console.error(e); }
+            try { await (window.authFetch || fetch)('/api/progress', { method:'PUT', headers:{'Content-Type':'application/json'}, credentials:'include', body: JSON.stringify({ userId, courseId: cid, status }) }); progMap[cid] = status; } catch(e) { console.error(e); }
         }
 
         async function removeBm(cid) {
             try {
-                await fetch('/api/bookmarks', { method:'DELETE', headers:{'Content-Type':'application/json'}, credentials:'include', body: JSON.stringify({ userId, courseId: cid }) });
+                await (window.authFetch || fetch)('/api/bookmarks', { method:'DELETE', headers:{'Content-Type':'application/json'}, credentials:'include', body: JSON.stringify({ userId, courseId: cid }) });
                 all = all.filter(b => b.course_id !== cid);
                 document.getElementById('countAll').textContent = all.length;
                 render(all);

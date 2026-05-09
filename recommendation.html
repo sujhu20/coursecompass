@@ -411,7 +411,7 @@
             const uid = localStorage.getItem('userId') || sessionStorage.getItem('userId');
             if (!uid) return;
             try {
-                const res = await fetch('/api/bookmarks', { method: 'POST', headers: {'Content-Type':'application/json'}, credentials: 'include', body: JSON.stringify({ userId: uid, courseId }) });
+                const res = await (window.authFetch || fetch)('/api/bookmarks', { method: 'POST', headers: {'Content-Type':'application/json'}, credentials: 'include', body: JSON.stringify({ userId: uid, courseId }) });
                 const data = await res.json();
                 btn.textContent = data.success ? '✓ Saved' : 'Failed';
                 if (data.success) { btn.disabled = true; btn.style.background = '#f0fdf4'; btn.style.color = '#059669'; }

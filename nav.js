@@ -1,4 +1,21 @@
-// nav.js — Clean professional navbar
+// nav.js — Clean professional navbar + auth helper
+
+// ─── Global authFetch: wraps fetch to include Bearer token ───
+// Vercel serverless loses in-memory sessions. This sends the HMAC token
+// with every API request so the server can authenticate stateless requests.
+window.authFetch = function(url, options = {}) {
+  const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
+  if (token) {
+    options.headers = options.headers || {};
+    if (typeof options.headers === 'object' && !(options.headers instanceof Headers)) {
+      options.headers['Authorization'] = 'Bearer ' + token;
+    }
+  }
+  // Always include credentials for cookie-based sessions (local dev)
+  options.credentials = options.credentials || 'include';
+  return fetch(url, options);
+};
+
 (function () {
   const container = document.getElementById('navbar-container');
   if (!container) return;
