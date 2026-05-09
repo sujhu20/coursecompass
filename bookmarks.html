@@ -107,7 +107,19 @@
             <button class="filter-btn" data-f="Humanities" onclick="filter('Humanities',this)">Humanities</button>
         </div>
 
-        <div class="course-grid" id="grid"></div>
+        <div class="course-grid" id="grid">
+            <div class="course-card" style="animation:pulse 1.5s ease-in-out infinite">
+                <div style="height:18px;background:#e5e7eb;border-radius:6px;width:70%;margin-bottom:12px"></div>
+                <div style="height:14px;background:#f3f4f6;border-radius:4px;width:90%;margin-bottom:8px"></div>
+                <div style="height:14px;background:#f3f4f6;border-radius:4px;width:60%"></div>
+            </div>
+            <div class="course-card" style="animation:pulse 1.5s ease-in-out infinite 0.2s">
+                <div style="height:18px;background:#e5e7eb;border-radius:6px;width:60%;margin-bottom:12px"></div>
+                <div style="height:14px;background:#f3f4f6;border-radius:4px;width:85%;margin-bottom:8px"></div>
+                <div style="height:14px;background:#f3f4f6;border-radius:4px;width:50%"></div>
+            </div>
+        </div>
+        <style>@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}</style>
     </div>
 
     <script>
@@ -178,12 +190,12 @@
         }
 
         async function updateProg(cid, status) {
-            try { await (window.authFetch || fetch)('/api/progress', { method:'PUT', headers:{'Content-Type':'application/json'}, credentials:'include', body: JSON.stringify({ userId, courseId: cid, status }) }); progMap[cid] = status; } catch(e) { console.error(e); }
+            try { await fetch('/api/progress', { method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ userId, courseId: cid, status }) }); progMap[cid] = status; } catch(e) { console.error(e); }
         }
 
         async function removeBm(cid) {
             try {
-                await (window.authFetch || fetch)('/api/bookmarks', { method:'DELETE', headers:{'Content-Type':'application/json'}, credentials:'include', body: JSON.stringify({ userId, courseId: cid }) });
+                await fetch('/api/bookmarks', { method:'DELETE', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ userId, courseId: cid }) });
                 all = all.filter(b => b.course_id !== cid);
                 document.getElementById('countAll').textContent = all.length;
                 render(all);

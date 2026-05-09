@@ -13,3 +13,5 @@ uploads/
 import_to_mysql.js
 export_to_mysql.js
 migration.sql
+count_courses.js
+force_upload.js
