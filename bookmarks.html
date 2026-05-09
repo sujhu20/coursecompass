@@ -114,16 +114,29 @@
         const userId = localStorage.getItem('userId') || sessionStorage.getItem('userId');
         if (!userId) window.location.href = 'login.html';
 
+        // Auth token injection for Vercel serverless
+        const _origFetch = window.fetch;
+        window.fetch = function(url, opts = {}) {
+            opts.credentials = opts.credentials || 'include';
+            const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
+            if (token) {
+                opts.headers = opts.headers || {};
+                if (typeof opts.headers === 'object' && !(opts.headers instanceof Headers)) {
+                    opts.headers['Authorization'] = 'Bearer ' + token;
+                }
+            }
+            return _origFetch.call(this, url, opts);
+        };
+
         function esc(s) { if (!s) return ''; return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
         let all = [], progMap = {};
 
         async function load() {
-            const af = window.authFetch || fetch;
             try {
                 const [bm, pr] = await Promise.all([
-                    af('/api/bookmarks/' + userId, { credentials:'include' }).then(r => r.json()),
-                    af('/api/progress/' + userId, { credentials:'include' }).then(r => r.json())
+                    fetch('/api/bookmarks/' + userId).then(r => r.json()),
+                    fetch('/api/progress/' + userId).then(r => r.json())
                 ]);
                 if (pr.success) pr.progress.forEach(p => { progMap[p.course_id] = p.status; });
                 if (bm.success) { all = bm.bookmarks; document.getElementById('countAll').textContent = all.length; render(all); }

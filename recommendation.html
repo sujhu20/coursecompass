@@ -276,6 +276,20 @@
         /* ═══ AUTH ═══ */
         if (!(localStorage.getItem('userId') || sessionStorage.getItem('userId'))) window.location.href = 'login.html';
 
+        /* ═══ AUTH TOKEN INJECTION (Vercel serverless) ═══ */
+        const _origFetch = window.fetch;
+        window.fetch = function(url, opts = {}) {
+            opts.credentials = opts.credentials || 'include';
+            const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
+            if (token) {
+                opts.headers = opts.headers || {};
+                if (typeof opts.headers === 'object' && !(opts.headers instanceof Headers)) {
+                    opts.headers['Authorization'] = 'Bearer ' + token;
+                }
+            }
+            return _origFetch.call(this, url, opts);
+        };
+
         /* ═══ INTEREST MAP ═══ */
         const interestMap = {
             PCM: [
@@ -411,7 +425,7 @@
             const uid = localStorage.getItem('userId') || sessionStorage.getItem('userId');
             if (!uid) return;
             try {
-                const res = await (window.authFetch || fetch)('/api/bookmarks', { method: 'POST', headers: {'Content-Type':'application/json'}, credentials: 'include', body: JSON.stringify({ userId: uid, courseId }) });
+                const res = await fetch('/api/bookmarks', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ userId: uid, courseId }) });
                 const data = await res.json();
                 btn.textContent = data.success ? '✓ Saved' : 'Failed';
                 if (data.success) { btn.disabled = true; btn.style.background = '#f0fdf4'; btn.style.color = '#059669'; }
