@@ -16,20 +16,6 @@ window.authFetch = function(url, options = {}) {
   return fetch(url, options);
 };
 
-// ─── Auto re-login check ───
-// If user has userId but no authToken, their session predates the token system.
-// Force re-login so a fresh token is generated and stored.
-(function() {
-  const userId = localStorage.getItem('userId') || sessionStorage.getItem('userId');
-  const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
-  const isLoginPage = window.location.pathname.endsWith('login.html') || window.location.pathname === '/';
-  if (userId && !token && !isLoginPage) {
-    localStorage.clear();
-    sessionStorage.clear();
-    window.location.href = 'login.html';
-  }
-})();
-
 (function () {
   const container = document.getElementById('navbar-container');
   if (!container) return;
