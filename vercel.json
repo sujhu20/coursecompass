@@ -14,7 +14,19 @@
       "use": "@vercel/static"
     },
     {
-      "src": "*.js",
+      "src": "*.svg",
+      "use": "@vercel/static"
+    },
+    {
+      "src": "*.png",
+      "use": "@vercel/static"
+    },
+    {
+      "src": "nav.js",
+      "use": "@vercel/static"
+    },
+    {
+      "src": "design-system.css",
       "use": "@vercel/static"
     }
   ],
@@ -28,11 +40,19 @@
       "dest": "server.js"
     },
     {
+      "src": "/logout",
+      "dest": "server.js"
+    },
+    {
+      "src": "/admin-users",
+      "dest": "server.js"
+    },
+    {
       "src": "/",
       "dest": "server.js"
     },
     {
-      "src": "/(.*)",
+      "src": "/(.*\\.(html|css|js|svg|png|ico|jpg|jpeg|gif|webp))",
       "dest": "/$1"
     }
   ]
