@@ -1,17 +1,49 @@
+# Dependencies
 node_modules/
+
+# Environment variables (contains API keys & secrets)
 .env
+.env.local
+.env.production
+
+# Database files
 database.db
 database.sqlite
 database.*.backup.sqlite
+*.sqlite3
+
+# Upload directories
 uploads/
+
+# Logs
 *.log
+npm-debug.log*
+
+# OS files
 .DS_Store
+Thumbs.db
 *.swp
 *.swo
+*~
 
-# Migration scripts
+# IDE/Editor
+.vscode/
+.idea/
+*.sublime-*
+
+# Migration & utility scripts (contain DB credentials)
 import_to_mysql.js
 export_to_mysql.js
 migration.sql
 count_courses.js
 force_upload.js
+
+# Test scripts
+test.sh
+test.ps1
+verify-deployment.js
+
+# Deployment configs for other platforms
+render.yaml
+Procfile
+SETUP_GUIDE.txt
