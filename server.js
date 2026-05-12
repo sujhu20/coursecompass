@@ -168,7 +168,7 @@ app.get('/api/health', (req, res) => {
   res.status(200).json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
-// Database connection (auto-detects: PostgreSQL on Vercel, SQLite locally)
+// Database connection (auto-detects: MySQL on Production/Vercel, SQLite locally)
 const db = require('./db');
 
 // ==================== DATABASE TABLES ====================

@@ -37,13 +37,14 @@
 - ✅ Downloadable career report
 - ✅ Health monitoring endpoint
 - ✅ Custom 404 error page
+- ✅ Dynamic SVG Branding & Logo
 
 ## 🛠️ Tech Stack
 
 | Layer | Technology |
 |-------|-----------|
 | Backend | Node.js + Express.js |
-| Database | SQLite3 |
+| Database | SQLite3 (Local) / MySQL (Production) |
 | Auth | bcrypt + Passport.js (Google OAuth 2.0) |
 | Frontend | Vanilla HTML/CSS/JS |
 | Security | Helmet, rate-limit, CSP, compression |
@@ -140,6 +141,11 @@ npm test                    # Runs verify-deployment.js
 4. Render auto-detects `render.yaml`
 5. Add environment variables in Render dashboard
 6. Deploy!
+
+### Vercel (Serverless)
+1. Install Vercel CLI: `npm i -g vercel`
+2. Run `vercel` in the root directory
+3. The project uses `vercel.json` for configuration and HMAC-signed stateless tokens for session persistence.
 
 ### Railway / Heroku
 Uses `Procfile` — `web: node server.js`
